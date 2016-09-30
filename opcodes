@@ -4,8 +4,8 @@ STA <32bit hex>
   STA CDEF
   
 Opcodes <8bit>
-LDA = 01h
-STA = 02h
+LDA <Address> = 01h
+STA <Address> = 02h
 ADD R1 = 03h
 ADD R2 = 04h
 ADD R3 = 05h
