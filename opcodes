@@ -6,8 +6,32 @@ STA <32bit hex>
 Opcodes <8bit>
 LDA = 01h
 STA = 02h
-ADD = 03h
-SUB = 04h
-MUL = 05h
-DIV = 06h
-MOD = 08h
+ADD R1 = 03h
+ADD R2 = 04h
+ADD R3 = 05h
+ADD R4 = 06h
+ADD R5 = 07h
+-------------
+SUB R1 = 08h
+SUB R2 = 09h
+SUB R3 = 0Ah
+SUB R4 = 0Bh
+SUB R5 = 0Ch
+-------------
+MUL R1 = 0Dh
+MUL R2 = 0Eh
+MUL R3 = 0Fh
+MUL R4 = 10h
+MUL R5 = 11h
+-------------
+DIV R1 = 12h
+DIV R2 = 13h
+DIV R3 = 14h
+DIV R4 = 15h
+DIV R5 = 16h
+--------------
+MOD R1 = h
+MOD R2 = h
+MOD R3 = h
+MOD R4 = h
+MOD R5 = h
