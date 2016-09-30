@@ -1,0 +1,13 @@
+LDA <32bit hex>
+  LDA ABCD
+STA <32bit hex>
+  STA CDEF
+  
+Opcodes <8bit>
+LDA = 01h
+STA = 02h
+ADD = 03h
+SUB = 04h
+MUL = 05h
+DIV = 06h
+MOD = 08h
