@@ -4,13 +4,19 @@ STA <32bit hex>
   STA CDEF
   
 Opcodes <8bit>
-LDA <Address> = 01h
-STA <Address> = 02h
-ADD R1 = 03h
+LDA <Address> = 01h //Load value from memory to accumulator
+STA <Address> = 02h //Store value in accumulator to memory
+MOV <Accumulator> <Register> = 03h //Move the contents of accumulator to a register. 
+MVI <Address|Register> <Immediate Value> //Move immediate value to a register or memory location
+END //Signify end of program, Will also show when to stop executing program when reading from Instruction Memory
+-------------
+ADD R1 = 03h  //Add Value in R1 with Accumulator
 ADD R2 = 04h
 ADD R3 = 05h
 ADD R4 = 06h
 ADD R5 = 07h
+-------------
+ADI //Add immediate value to accumulator
 -------------
 SUB R1 = 08h
 SUB R2 = 09h
