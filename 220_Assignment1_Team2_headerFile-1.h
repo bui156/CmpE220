@@ -1,4 +1,4 @@
-// Please save this as ".h" file
+# include <string.h>
 
 /**
  * Converts hexadecimal input to binary
