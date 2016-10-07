@@ -12,8 +12,8 @@ using namespace std;
 
 # include "conversions.h"
 
-//Defining the parts of processor 
-bool memory [4096][8]; 
+//Defining the parts of processor
+bool memory [4096][8];
 bool flags [8];
 bool validAddressFlag = 1;
 bool accumulator [32] = {1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
@@ -42,11 +42,10 @@ char checkOperend[9];
 char checkCommand[5];
 char inputString[100];
 
-//Fuction prototype for different user difined functions 
-void LDA(int); //This function will copy the contents of 4 consecutive bytes starting from the specified byte address into accumulator  
+//Fuction prototype for different user difined functions
+void LDA(int); //This function will copy the contents of 4 consecutive bytes starting from the specified byte address into accumulator
 void STA(int); //This function will copy the contents of accumulator into 4 consecutive bytes starting from the specified byte address
-int convertHexToDecimal(char checkOperend []);
-void validDataMemoryAddressCheck(int memoryLocation); 
+void validDataMemoryAddressCheck(int memoryLocation);
 void memoryDump();
 
 int main(){
@@ -59,15 +58,14 @@ int main(){
 
 	// Taking command as input from user
 	if(c == 0)
-		cout<<"Enter command or 'exit' to exit out of the code: ";
-	gets(inputString); 
-	
+		cout<<"Enter command or 'exit' to exit out of the code: "<<endl;
+	gets(inputString);
+
 	if(strcmp(inputString,"exit") == 0){
 		printf("\n ---------------------- Thanks for using out code !!! ------------------------ \n");
 		break;
 	}
 
-	
 	//Seperating the command part from input string
 	for (int i = 0; i<=5; i++) {
 		if(inputString[i] == ' ' || inputString[i] == '\0'){
@@ -78,67 +76,51 @@ int main(){
 	}
 	checkCommand[j] = '\0';
 	string command = checkCommand;
-	
+
 	//Seperating the address part from input string
 	for(int i =j+1,k=0; inputString[i] != '\0'; i++,k++) {
 		checkOperend[k] = inputString[i];
 		if (inputString[i+1] == '\0')
 			checkOperend[k+1] = '\0';
 	}
-	
+
 	//convert Hex memory to decimal
-	int memoryLocation = convertBinaryTodecimal(covertHexToBinary(checkOperend));	
-	
-	//Validation of memory 
+	int memoryLocation = convertBinaryTodecimal(covertHexToBinary(checkOperend));
+
+	//Validation of memory
 	validDataMemoryAddressCheck(memoryLocation);
 
-	
-	//If else lader to check for opperations to call 
-	if(strcmp(command.c_str(),"LDA") == 0 && validAddressFlag == 1) { 
+	//If else lader to check for opperations to call
+	if(strcmp(command.c_str(),"LDA") == 0 && validAddressFlag == 1) {
 		//call the function to load
-		LDA(memoryLocation); 
+		LDA(memoryLocation);
 	}
 	else if(strcmp(command.c_str(),"STA") == 0 && validAddressFlag == 1){
-		//call the function to store 
+		//call the function to store
 		STA(memoryLocation);
 	}
 	else{
 		printf("Inside main -- Invalid command !!! \n");
 		continue;
 	}
-	
-	/*//Memory dump 
-	printf("Memory: \n");
-	char loc[8];
-	for(int i = 2040; i<=2055; i++) {
-		printf("Memory Location: %X: ",i);
-		char vOut[9];
-		for(j=0;j<8;j++){
-			vOut[j] = memory[i][j] ? '1' : '0';
-		}
-		vOut[8] = '\0';
-		printf("%X",convertBinaryTodecimal(vOut));
-		
-		printf("\n");
-	}
-	*/
+
 	memoryDump();
-	
+
 	for(int i=0; i<=99;i++){
 		inputString[i]= '\0';
 	}
-	
-	//Asking to loop 
+
+	//Asking to loop
 
 	cout<<"\n\nEnter next command or 'exit' to exit out of the code: ";
 
-c++;
-					
-} // do-while loop ends here
+	c++;
+
+	} // do-while loop ends here
 }
 
 void LDA (int finalMemoryLocation) {
-	
+
 	for (int i = 0; i < 32; i++){
 		if (i >= 0 && i <= 7)
 			accumulator[i] = memory[finalMemoryLocation][i];
@@ -149,12 +131,12 @@ void LDA (int finalMemoryLocation) {
 		if (i >= 24 && i <= 31)
 			accumulator[i] = memory[finalMemoryLocation+3][i-24];
 	}
-	
+
 	return ;
 }
 
 void STA(int finalMemoryLocation) {
-	
+
 	for (int i = 0; i < 32; i++){
 		if (i >= 0 && i <= 7)
 			memory[finalMemoryLocation][i] = accumulator[i];
@@ -165,16 +147,16 @@ void STA(int finalMemoryLocation) {
 		if (i >= 24 && i <= 31)
 			memory[finalMemoryLocation+3][i-24] = accumulator[i];
 	}
-	
+
 	return ;
 }
 
 void validDataMemoryAddressCheck(int memoryLocation){
-	
+
 	if (memoryLocation <= 1024 || memoryLocation > 4092) {
 		validAddressFlag = 0;
-	} 
-	
+	}
+
 }
 
 void memoryDump() {
@@ -192,17 +174,16 @@ void memoryDump() {
 		int R15[32];
 	*/
 
-	int i = 0; 
-	char binaryString[8];
+	int i = 0;
 
 	printf("\n Flag Register: ");
-	
+
 	for(int j=0;j<8;j++){
 		printf("%d",flags[j]);
 	}
 
 	printf("\n\nSpecial Purpose registers: ");
-	printf("\n Accumulator Register: "); 
+	printf("\n Accumulator Register: ");
 	char vOut[33];
 	for(int i = 0; i < 32; i++){
 		vOut[i] = accumulator[i] ? '1' : '0';
@@ -308,7 +289,7 @@ void memoryDump() {
 	}
 	vOut[32] = '\0';
 	printf("%X",convertBinaryTodecimal(vOut));
-	
+
 	printf("\t R11: ");
 	for (i = 0; i < 32; i++) {
 		vOut[i] = R11[i] ? '1': '0';
@@ -343,11 +324,11 @@ void memoryDump() {
 	}
 	vOut[32] = '\0';
 	printf("%X",convertBinaryTodecimal(vOut));
-	
-	//Memory dump 
+
+	//Memory dump
 	cout<<endl<<endl;
 	printf("Memory: \n");
-	char loc[8];
+
 	for(int i = 2040; i<=2055; i++) {
 		printf(" Memory Location: %X: ",i);
 		char vOut[9];
@@ -356,27 +337,11 @@ void memoryDump() {
 		}
 		vOut[8] = '\0';
 		printf("%X\t\t\t",convertBinaryTodecimal(vOut));
-		
+
 		if (i%2 != 0)
 			printf("\n");
-		
-	}
 
-/*
-	printf("\n Memory values 2048 - 4096:");
-	for (i = 2048; i < 2096; i++) {
-		//Get Binary string from memory
-		for (int j = 0; j < 7; j++)
-			binaryString[j] = memory[i][j];
-		//Call Binary to Hex Converter
-		//binaryToHex(binaryString[]);
-		//Print Memory Address Location and its hexValue
-		printf("Memory Address %d: ", i);
-		for (int k = 0; k < 2; k++)
-			printf("%c", hexValue[k]);
-		printf("\n");
 	}
-*/
 
 	return;
 }
