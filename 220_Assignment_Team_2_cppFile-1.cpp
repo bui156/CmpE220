@@ -30,7 +30,8 @@ bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 int startMemLocation = 1024;
 
 //Opcodes for Registers
-bool Exit_Opcode [8] = {1,0,1,0,1,0,1,0}; //AAh, 170d
+char tmpExit_Opcode [8] = {'1','0','1','0','1','0','1','0'};
+bool exit_Opcode [8] = {1,0,1,0,1,0,1,0}; //AAh, 170d
 bool R0_Opcode [8] = {0,0,0,0,0,0,0,1};	//1
 bool R1_Opcode [8] = {0,0,0,0,0,0,1,0}; //2
 bool R2_Opcode [8] = {0,0,0,0,0,0,1,1}; //3
@@ -95,6 +96,7 @@ int instructionOperation = 0;
 int instructionOperand1 = 0;
 int instructionOperand2 = 0;
 int instructionOperand3 = 0;
+int exitCodeCount = 0;
 
 //Fuction prototype for different user difined functions
 void LDA(int); //This function will copy the contents of 4 consecutive bytes starting from the specified byte address into accumulator
@@ -130,10 +132,15 @@ int main(){
 
 	//Start Program
 	cout<<"Starting Program"<<endl;
-	getCurrentInstruction();
-	parseInstructionFromMemory();
-	decodeInstructionOperationOperand();
-	callAppropriateFunction();
+	startMemLocation=1024;
+	while (exitCodeCount != 8){
+		getCurrentInstruction();
+		parseInstructionFromMemory();
+		if (exitCodeCount != 8){
+			decodeInstructionOperationOperand();
+			callAppropriateFunction();
+		}
+	}
 
 	for (int i = 0; i < 32; i++){
 		printf("%c", currentInstruction[i]);
@@ -533,7 +540,7 @@ void instructionIntoMemory(char* token,int memLocation) {
 																					if(strcmp(token,"EXIT")==0){
 																						cout<<"EXIT CODE"<<endl;
 																						for (int i = 0; i < 8; i++){
-																							memory[memLocation][i] = Exit_Opcode[i];
+																							memory[memLocation][i] = exit_Opcode[i];
 																						}
 																					}
 }
@@ -561,6 +568,13 @@ void parseInstructionFromMemory(){
 			operand3[i-24] = currentInstruction[i];
 	}
 
+	exitCodeCount = 0; //Reset Exit Code Count in case it was incremented by other codes matching "part" of the exit code. 
+
+	for (int i = 0; i < 8; i++){
+		if (operation[i] == tmpExit_Opcode[i])
+			exitCodeCount++;
+	}
+
 	/*
 	operation[9] = '\0';
 	operand1[9] = '\0';
@@ -579,6 +593,7 @@ void parseInstructionFromMemory(){
 //         Global Variable currentInstruction[32]
 /*************************************************************/
 void getCurrentInstruction(){
+	/*
 	//Read Value from Program Counter Instruction
 	char tempMemoryLocation[32]; //Will convert bool programCounterRegster to char programCounterRegister
 
@@ -613,6 +628,23 @@ void getCurrentInstruction(){
 	//Increment Program Counter + 4
 	//programCounterRegister + 4
 	return;
+	*/
+
+	for (int i = 0; i < 32; i++){
+		if (i >= 0 && i <= 7)
+			currentInstruction[i] = memory[startMemLocation][i] ? '1' : '0';
+		if (i >= 8 && i <= 15)
+			currentInstruction[i] = memory[startMemLocation+1][i-8] ? '1' : '0';
+		if (i >= 16 && i <= 23)
+			currentInstruction[i] = memory[startMemLocation+2][i-16] ? '1' : '0';
+		if (i >= 24 && i <= 31)
+			currentInstruction[i] = memory[startMemLocation+3][i-24] ? '1' : '0';
+	}
+	currentInstruction[33] = '\0';
+	if (startMemLocation == 1032);
+
+	startMemLocation += 4;
+
 }
 /*******************************************
  * This function changes the operation/opcode
@@ -912,8 +944,10 @@ void decodeInstructionOperationOperand(){
  the appropriate function.
  *******************************************/
 void callAppropriateFunction(){
-	if (instructionOperation==128)
+	if (instructionOperation==128){
 		add(instructionOperand1, instructionOperand2, instructionOperand3);
+		cout<<"add"<<endl;
+	}
 /*
 	if (instructionOperation==128)
 		add(instructionOperand1, instructionOperand2, instructionOperand3);
