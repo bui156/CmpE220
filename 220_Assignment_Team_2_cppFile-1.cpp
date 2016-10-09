@@ -119,7 +119,7 @@ void callAppropriateFunction();
 void add(int z, int x, int y);
 void sub(int z, int x, int y);
 void mul(int z, int x, int y);
-//void div(int z, int x, int y);
+void div(int z, int x, int y);
 void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
 int convertBinaryTodecimal(bool *bits, int);
@@ -956,9 +956,9 @@ void callAppropriateFunction(){
 		sub(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
 		mul(instructionOperand1, instructionOperand2, instructionOperand3);
-/*
 	else if (instructionOperation==131)
 		div(instructionOperand1, instructionOperand2, instructionOperand3);
+/*
 	else if (instructionOperation==132)
 		mod(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==133)
@@ -1020,7 +1020,7 @@ void sub(int z, int x, int y){
 
 //	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is defined by y
+//	function to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
@@ -1038,6 +1038,7 @@ void sub(int z, int x, int y){
 	}
 
 	i = 31;
+
 	while(i>=0){
 		sum = (tempA1[i] ^ tempR1[i]) ^ carry;
 		temp1 = tempA1[i] & tempR1[i];
@@ -1114,6 +1115,11 @@ void mul(int z, int x, int y){
 	printf("\n%d * %d = %d\n", n1,n,n3);
 	printf("\n%d * %d = %d\n", n4,n5,n3);
 }
+
+/***************************************************
+ * Divide Function
+ ***************************************************/
+
 
 /**
  * Converts hexadecimal input to binary
