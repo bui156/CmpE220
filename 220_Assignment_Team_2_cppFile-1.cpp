@@ -59,10 +59,17 @@ bool LDA_Opcode [8] = {1,0,0,0,0,1,0,1}; //133
 bool STA_Opcode [8] = {1,0,0,0,0,1,1,0}; //134
 bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
 
+bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
 bool R1 [32];
-bool R2 [32];
-bool R3 [32];
+bool R2 [32] = {0,0,0,0,0,0,0,0,
+		        0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1};
+bool R3 [32] = {0,0,0,0,0,0,0,0,
+			    0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,1,0};
 bool R4 [32];
 bool R5 [32];
 bool R6 [32];
@@ -102,6 +109,12 @@ void parseInstructionFromMemory();
 void getCurrentInstruction();
 void decodeInstructionOperationOperand();
 void callAppropriateFunction();
+void add(int z, int x, int y);
+//void sub(int z, int x, int y);
+//void mul(int z, int x, int y);
+//void div(int z, int x, int y);
+void findSourceRegister(int x, bool *tempR1);
+void findDestinationRegister(int x, bool *tempR2);
 
 int main(){
 
@@ -127,6 +140,8 @@ int main(){
 		printf("%c", currentInstruction[i]);
 	}
 	cout<<"Program Finished"<<endl;
+
+	memoryDump();
 }
 
 void LDA (int finalMemoryLocation) {
@@ -898,6 +913,8 @@ void decodeInstructionOperationOperand(){
  the appropriate function.
  *******************************************/
 void callAppropriateFunction(){
+	if (instructionOperation==128)
+		add(instructionOperand1, instructionOperand2, instructionOperand3);
 /*
 	if (instructionOperation==128)
 		add(instructionOperand1, instructionOperand2, instructionOperand3);
@@ -917,4 +934,259 @@ void callAppropriateFunction(){
 		mov();
 */
 	return;
+}
+void add(int z, int x, int y) {
+
+	int i = 31;
+	bool carry=0, temp1=0, temp2=0, sum=0;
+	bool tempR1[32], tempR2[32], tempA[32];
+
+//	function to decide which register is deffined by x
+	findSourceRegister(x,tempR1);
+
+//	funtion to decide which register is deffined by y
+	findSourceRegister(y,tempR2);
+
+	while(i>=0){
+		sum = (tempR1[i]^tempR2[i]) ^ carry;
+		temp1 = tempR1[i] & tempR2[i];
+		temp2 = (tempR1[i]^tempR2[i]) & carry;
+		carry = temp1 | temp2;
+		tempA[i] = sum;
+		i--;
+	}
+
+// function to decide which register is deffined by z
+	findDestinationRegister(z, tempA);
+/*
+	printf("Addition: \n");
+	for(int i=0; i<32; i++){
+		printf("%d", R4[i]);
+	}
+	printf("\n");
+
+	for(int i=0; i<32; i++){
+		printf("%d", R3[i]);
+	}
+	printf("  +\n--------------------------------\n");
+
+	for(int i=0; i<32; i++){
+		printf("%d", R1[i]);
+	}
+	printf("\n");
+*/
+
+}
+
+void findSourceRegister(int x, bool *tempR1){
+
+//	Switch case to deside which register is deffined by x
+	switch(x){
+
+		case 0:
+			for(int i=0; i<32; i++){
+				tempR1[i] = A[i];
+			}
+			break;
+
+		case 1:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R1[i];
+			}
+			break;
+
+		case 2:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R2[i];
+			}
+			break;
+
+		case 3:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R3[i];
+			}
+			break;
+
+		case 4:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R4[i];
+			}
+			break;
+
+		case 5:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R5[i];
+			}
+			break;
+
+		case 6:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R6[i];
+			}
+			break;
+
+		case 7:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R7[i];
+			}
+			break;
+
+		case 8:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R8[i];
+			}
+			break;
+
+		case 9:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R9[i];
+			}
+			break;
+
+		case 10:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R10[i];
+			}
+			break;
+
+		case 11:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R11[i];
+			}
+			break;
+
+		case 12:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R12[i];
+			}
+			break;
+
+		case 13:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R13[i];
+			}
+			break;
+
+		case 14:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R14[i];
+			}
+			break;
+
+		case 15:
+			for(int i=0; i<32; i++){
+				tempR1[i] = R15[i];
+			}
+			break;
+
+		default:
+			printf("\nWrong register input !!! \n");
+			break;
+	}
+}
+
+void findDestinationRegister(int z, bool *tempA){
+
+	switch(z){
+
+		case 0:
+			for(int i=0; i<32; i++){
+				A[i] = tempA[i];
+			}
+			break;
+
+		case 1:
+			for(int i=0; i<32; i++){
+				R1[i] = tempA[i];
+			}
+			break;
+
+		case 2:
+			for(int i=0; i<32; i++){
+				R2[i] = tempA[i];
+			}
+			break;
+
+		case 3:
+			for(int i=0; i<32; i++){
+				R3[i] = tempA[i];
+			}
+			break;
+
+		case 4:
+			for(int i=0; i<32; i++){
+				R4[i] = tempA[i];
+			}
+			break;
+
+		case 5:
+			for(int i=0; i<32; i++){
+				R5[i] = tempA[i];
+			}
+			break;
+
+		case 6:
+			for(int i=0; i<32; i++){
+				R6[i] = tempA[i];
+			}
+			break;
+
+		case 7:
+			for(int i=0; i<32; i++){
+				R7[i] = tempA[i];
+			}
+			break;
+
+		case 8:
+			for(int i=0; i<32; i++){
+				R8[i] = tempA[i];
+			}
+			break;
+
+		case 9:
+			for(int i=0; i<32; i++){
+				R9[i] = tempA[i];
+			}
+			break;
+
+		case 10:
+			for(int i=0; i<32; i++){
+				R10[i] = tempA[i];
+			}
+			break;
+
+		case 11:
+			for(int i=0; i<32; i++){
+				R11[i] = tempA[i];
+			}
+			break;
+
+		case 12:
+			for(int i=0; i<32; i++){
+				R12[i] = tempA[i];
+			}
+			break;
+
+		case 13:
+			for(int i=0; i<32; i++){
+				R13[i] = tempA[i];
+			}
+			break;
+
+		case 14:
+			for(int i=0; i<32; i++){
+				R14[i] = tempA[i];
+			}
+			break;
+
+		case 15:
+			for(int i=0; i<32; i++){
+				R15[i] = tempA[i];
+			}
+			break;
+
+		default:
+			printf("\nWrong register input !!! \n");
+			break;
+	}
 }
