@@ -61,16 +61,22 @@ bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
-bool R1 [32];
+bool R1 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1}; //1
 bool R2 [32] = {0,0,0,0,0,0,0,0,
 		        0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,1};
+				0,0,0,0,0,0,1,0}; //2
 bool R3 [32] = {0,0,0,0,0,0,0,0,
 			    0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,1,0};
-bool R4 [32];
+				0,0,0,0,0,0,1,1}; //3
+bool R4 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1}; //4
 bool R5 [32];
 bool R6 [32];
 bool R7 [32];
@@ -568,7 +574,7 @@ void parseInstructionFromMemory(){
 			operand3[i-24] = currentInstruction[i];
 	}
 
-	exitCodeCount = 0; //Reset Exit Code Count in case it was incremented by other codes matching "part" of the exit code. 
+	exitCodeCount = 0; //Reset Exit Code Count in case it was incremented by other codes matching "part" of the exit code.
 
 	for (int i = 0; i < 8; i++){
 		if (operation[i] == tmpExit_Opcode[i])
