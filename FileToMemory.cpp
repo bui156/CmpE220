@@ -339,13 +339,29 @@ void decodeInstruction(string textLine){
 
 	char* pch;
 
-	pch = strtok((char*)textLine.c_str()," ,");
+	pch = strtok((char*)textLine.c_str()," ,\r");
 
 	while (pch != NULL)
 	{
-		instructionIntoMemory(pch,startMemLocation);
-		startMemLocation++;
-		pch = strtok (NULL, " ,");
+		if(strcmp(pch,"MFA")==0){
+			cout<<"IN MFA"<<endl;
+			pch = strtok (NULL, " ");
+			//Call Nishants Function with pch
+			cout<<"THE PCH TO PASS: "<<pch<<endl;
+			pch = strtok (NULL, " ,\r");
+		}else
+			if(strcmp(pch,"MTA")==0){
+				cout<<"IN MTA"<<endl;
+				pch = strtok (NULL, " ");
+				//Call Nishants Function with pch
+				cout<<"THE PCH TO PASS: "<<pch<<endl;
+				pch = strtok (NULL, " ,\r");
+			}else{
+				cout<<"IN ELSE"<<endl;
+				instructionIntoMemory(pch,startMemLocation);
+				startMemLocation++;
+				pch = strtok (NULL, " ,\r");
+			}
 	}
 
 }
