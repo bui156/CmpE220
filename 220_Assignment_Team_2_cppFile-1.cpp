@@ -663,6 +663,11 @@ int StringMemoryAddressing(string str){
  *************************************************************/
 int StringRegistersToInt(string strNew){
 	char vOut[33];
+	if(strcmp(strNew.c_str(),"R0")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R0[i] ? '1' : '0';
+		}
+	}
 	if(strcmp(strNew.c_str(),"R1")==0){
 		for(int i = 0; i < 32; i++){
 			vOut[i] = R1[i] ? '1' : '0';
@@ -678,6 +683,66 @@ int StringRegistersToInt(string strNew){
 			vOut[i] = R3[i] ? '1' : '0';
 		}
 	}
+	if(strcmp(strNew.c_str(),"R4")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R4[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R5")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R5[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R6")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R6[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R7")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R7[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R8")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R8[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R9")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R9[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R10")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R10[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R11")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R11[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R12")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R12[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R13")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R13[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R14")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R14[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R15")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R15[i] ? '1' : '0';
+			}
+		}
 
 	int ret = strtol(vOut, NULL, 2);
 	return ret;
@@ -1186,7 +1251,7 @@ void mod(int z, int x, int y){
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(dividend == 0) {zeroFlag = 1;}
+	if(dividend == 0) {zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;}
 
 }
 
@@ -1249,7 +1314,7 @@ void div(int z, int x, int y){
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(q == 0) {zeroFlag = 1;}
+	if(q == 0) {zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;}
 }
 
 // Multiply function - Takes three register numbers as input (z,x,y) and multiply 'x' register and 'y' register and stores the result in 'z' register
@@ -1308,7 +1373,7 @@ void mul(int z, int x, int y){
 	findDestinationRegister(z, temp);
 
 // flag updateing
-	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; printf("There is a overflow after MUL operation !!!");break;} }
+	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; printf("There is a overflow after MUL operation !!!");break;} }
 	if(convertBinaryTodecimal(temp,32) == 0){ zeroFlag = 1;}
 }
 
@@ -1338,7 +1403,7 @@ void add(int z, int x, int y) {
 	findDestinationRegister(z, tempA);
 
 // flag updateing
-	if(carry == 1){carryFlag = 1; overflowFlag = 1; printf("There is a overflow and carry after ADD operation !!!");}
+	if(carry == 1){carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; printf("There is a overflow and carry after ADD operation !!!");}
 }
 
 // Substract function - Takes three register numbers as input (z,x,y) and substract 'x' register and 'y' register and stores the result in 'z' register
@@ -1382,10 +1447,10 @@ void sub(int z, int x, int y){
 
 // flag updateing
 	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
-		signFlag = 1; overflowFlag = 1;
+		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
 		printf("There is a overflow after SUB operation !!!");
 	}
-	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { zeroFlag = 1; }
+	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { zeroFlag = 1; signFlag = 0; overflowFlag = 1; carryFlag = 0;}
 
 }
 
@@ -1448,7 +1513,7 @@ void findSourceRegister(int x, bool *tempR1){
 
 		case 0:
 			for(int i=0; i<32; i++){
-				tempR1[i] = A[i];
+				tempR1[i] = R0[i];
 			}
 			break;
 
@@ -1555,7 +1620,7 @@ void findDestinationRegister(int z, bool *tempA){
 
 		case 0:
 			for(int i=0; i<32; i++){
-				A[i] = tempA[i];
+				R0[i] = tempA[i];
 			}
 			break;
 
@@ -1654,4 +1719,3 @@ void findDestinationRegister(int z, bool *tempA){
 			break;
 	}
 }
-
