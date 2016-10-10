@@ -378,10 +378,9 @@ void memoryDump() {
 	cout<<endl<<endl;
 	printf("Memory: HEX: DEC\n");
 
-
-	/*
 	//for(int i = 1024; i<=2055; i++) {
-	for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
+	//for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
+	for (int i = 1024; i <=1104; i++) {
 		printf(" Memory Location: %X: ",i);
 		char vOut[9];
 		for(int j=0;j<8;j++){
@@ -394,8 +393,6 @@ void memoryDump() {
 			printf("\n");
 
 	}
-
-	*/
 
 	return;
 }
