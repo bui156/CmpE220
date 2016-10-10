@@ -17,7 +17,7 @@ using namespace std;
 //Defining the parts of processor
 bool memory [4096][8];
 bool flags [8];
-bool signFlag=0, overflowFlag=0, zeroFlag=0, carryFlag=0; 
+bool signFlag=0, overflowFlag=0, zeroFlag=0, carryFlag=0;
 bool validAddressFlag = 1;
 bool accumulator [32] = {1,1,1,1,1,1,1,1,
 		                 0,0,0,0,0,0,0,1,
@@ -78,7 +78,7 @@ bool R3 [32] = {0,0,0,0,0,0,0,0,
 bool R4 [32] = {0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,1}; //4
+				0,0,0,0,0,1,0,0}; //4
 bool R5 [32];
 bool R6 [32];
 bool R7 [32];
@@ -130,7 +130,7 @@ int MemoryAddressing(int imm, int rdx, int rcx, int S);
 int StringMemoryAddressing(string str);
 int StringRegistersToInt(string strNew);
 
-// Function declaration for ALU operation 
+// Function declaration for ALU operation
 void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
 int convertBinaryTodecimal(bool *bits, int);
@@ -220,11 +220,16 @@ void memoryDump() {
 
 	int i = 0;
 
+	/*
 	printf("\n Flag Register: ");
 
 	for(int j=0;j<8;j++){
 		printf("%d",flags[j]);
 	}
+	*/
+
+	printf("\n Flags: \n overflowFlag = %d, signFlag = %d, zeroFlag = %d, carryFlag = %d \n",
+			overflowFlag, signFlag, zeroFlag, carryFlag);
 
 	printf("\n\nSpecial Purpose registers: ");
 	printf("\n Accumulator Register: ");
@@ -373,6 +378,8 @@ void memoryDump() {
 	cout<<endl<<endl;
 	printf("Memory: HEX: DEC\n");
 
+
+	/*
 	//for(int i = 1024; i<=2055; i++) {
 	for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
 		printf(" Memory Location: %X: ",i);
@@ -387,6 +394,8 @@ void memoryDump() {
 			printf("\n");
 
 	}
+
+	*/
 
 	return;
 }
@@ -490,6 +499,18 @@ void instructionIntoMemory(char* token,int memLocation) {
 						memory[memLocation][i] = DIV_Opcode[i];
 					}
 				}else
+					if(strcmp(token,"MOD")==0){
+						cout<<"IN MOD"<<endl;
+						for (int i = 0; i < 8; i++){
+							memory[memLocation][i] = MOD_Opcode[i];
+						}
+					}else
+						if(strcmp(token,"MOV")==0){
+							cout<<"IN MOV"<<endl;
+							for (int i = 0; i < 8; i++){
+								memory[memLocation][i] = MOV_Opcode[i];
+							}
+						}else
 					if(strcmp(token,"R0")==0){
 						cout<<"IN R0"<<endl;
 						for (int i = 0; i < 8; i++){
@@ -1070,76 +1091,77 @@ void callAppropriateFunction(){
 		sub(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
 		mul(instructionOperand1, instructionOperand2, instructionOperand3);
-	//else if (instructionOperation==131)
-		//div(instructionOperand1, instructionOperand2, instructionOperand3);
-/*
+	else if (instructionOperation==131)
+		div(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==132)
 		mod(instructionOperand1, instructionOperand2, instructionOperand3);
+	/*
 	else if (instructionOperation==133)
 		lda();
 	else if (instructionOperation==134)
 		sta();
+	*/
 	else if (instructionOperation==135)
-		mov();
-*/
+		mov(instructionOperand1, instructionOperand2, instructionOperand3);
+
 	return;
 }
 
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD
  ******************************************************************/
- 
-// Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register  
+
+// Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register
 void mov(int z, int x, int y){
 	bool tempR1[32], tempR2[32], tempA[32];
-//	function to decide which register is deffined by x	
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
-	
+
 	for(int i=0; i<32; i++){
 		tempR2[i] = tempR1[i];
 	}
-		
-//function to decide which register is deffined by z	
+
+//function to decide which register is deffined by z
 	findDestinationRegister(z, tempR2);
-	
+
 }
 
-// Modular function - Takes three register numbers as input (z,x,y) and take Modulos between 'x' register and 'y' register and stores the result in 'z' register 
+// Modular function - Takes three register numbers as input (z,x,y) and take Modulos between 'x' register and 'y' register and stores the result in 'z' register
 void mod(int z, int x, int y){
-	
+
 	int i=32, rim, q=0, divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
-	
-//	function to decide which register is deffined by x	
+
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
-	
+
 	dividend = convertBinaryTodecimal(tempR1,32);
 	int n = dividend;
 	divisor = convertBinaryTodecimal(tempR2,32);
 	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 
-//	Calculating 2's compliment	
+//	Calculating 2's compliment
 	for(int i=0; i<32; i++){
 		tempRX[i] = !tempR2[i];
 	}
-	
+
 	for(int i=31; i>=0; i--){
 		sum = (tempRX[i] ^ tempRY[i]) ^ carry;
 		temp1 = tempRX[i] & tempRY[i];
 		temp2 = (tempRX[i] ^ tempRY[i]) & carry;
 		carry = temp1 | temp2;
 		tempA1[i] = sum;
-	}	
+	}
 
-//	Division loop 
-	carry=0; temp1=0; temp2=0; sum=0;	
+//	Division loop
+	carry=0; temp1=0; temp2=0; sum=0;
 	while(dividend >= divisor){
-		
-		carry=0; temp1=0; temp2=0; sum=0;		
+
+		carry=0; temp1=0; temp2=0; sum=0;
 		for(int i=31; i>=0; i--){
 			sum = (tempR1[i] ^ tempA1[i]) ^ carry;
 			temp1 = tempR1[i] & tempA1[i];
@@ -1147,63 +1169,63 @@ void mod(int z, int x, int y){
 			carry = temp1 | temp2;
 			tempA2[i] = sum;
 		}
-		
+
 		q++;
-		
+
 		for(int k=0; k<32; k++){
 			tempR1[k]=tempA2[k];
 		}
-		
+
 		dividend = 	convertBinaryTodecimal(tempA2,32);
-				
+
 	}
-	
+
 	convertDecimalToBinary(dividend,finalResult);
 
-//	function to decide which register is deffined by z	
-	findDestinationRegister(z, finalResult);	
+//	function to decide which register is deffined by z
+	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(dividend == 0) {zeroFlag = 1;}
-	
+	if(dividend == 0) {zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;}
+
 }
 
-// Divition function - Takes three register numbers as input (z,x,y) and divides 'x' register and 'y' register and stores the result in 'z' register 
+// Divition function - Takes three register numbers as input (z,x,y) and divides 'x' register and 'y' register and stores the result in 'z' register
 void div(int z, int x, int y){
-	
+
 	int i=32, rim, q=0, divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
-	
-//	function to decide which register is deffined by x	
+
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
-	
+
 	dividend = convertBinaryTodecimal(tempR1,32);
 	int n = dividend;
 	divisor = convertBinaryTodecimal(tempR2,32);
 	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 
-//	Calculating 2's compliment	
+//	Calculating 2's compliment
 	for(int i=0; i<32; i++){
 		tempRX[i] = !tempR2[i];
 	}
-	
+
 	for(int i=31; i>=0; i--){
 		sum = (tempRX[i] ^ tempRY[i]) ^ carry;
 		temp1 = tempRX[i] & tempRY[i];
 		temp2 = (tempRX[i] ^ tempRY[i]) & carry;
 		carry = temp1 | temp2;
 		tempA1[i] = sum;
-	}	
+	}
 
-//	Division loop 
-	carry=0; temp1=0; temp2=0; sum=0;	
+//	Division loop
+	carry=0; temp1=0; temp2=0; sum=0;
 	while(dividend >= divisor){
-		
-		carry=0; temp1=0; temp2=0; sum=0;		
+
+		carry=0; temp1=0; temp2=0; sum=0;
 		for(int i=31; i>=0; i--){
 			sum = (tempR1[i] ^ tempA1[i]) ^ carry;
 			temp1 = tempR1[i] & tempA1[i];
@@ -1211,46 +1233,46 @@ void div(int z, int x, int y){
 			carry = temp1 | temp2;
 			tempA2[i] = sum;
 		}
-		
+
 		q++;
-		
+
 		for(int k=0; k<32; k++){
 			tempR1[k]=tempA2[k];
 		}
-		
+
 		dividend = 	convertBinaryTodecimal(tempA2,32);
-				
+
 	}
-	
+
 	convertDecimalToBinary(q,finalResult);
-// function to decide which register is deffined by z	
-	findDestinationRegister(z, finalResult);	
+// function to decide which register is deffined by z
+	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(q == 0) {zeroFlag = 1;}	
+	if(q == 0) {zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;}
 }
 
-// Multiply function - Takes three register numbers as input (z,x,y) and multiply 'x' register and 'y' register and stores the result in 'z' register 
+// Multiply function - Takes three register numbers as input (z,x,y) and multiply 'x' register and 'y' register and stores the result in 'z' register
 void mul(int z, int x, int y){
-	
+
 	int i;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempR11[64], tempR22[64], tempA[32], tempAA[64];
 
-//	function to decide which register is deffined by x	
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
-	
+
 	int n = convertBinaryTodecimal(tempR2,32);
 
 //	Debugging
 	int n1 = convertBinaryTodecimal(tempR1, 32);
 	int n2 = convertBinaryTodecimal(tempR2, 32);
-	
-//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplicxation 
+
+//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplicxation
 	for(int i=0; i<64; i++){
-		
+
 		if(i<=31){
 			tempR11[i] = 0;
 			tempR22[i] = 0;
@@ -1260,11 +1282,11 @@ void mul(int z, int x, int y){
 			tempR22[i] = tempR2[i-32];
 		}
 	}
-	
+
 //	Initialinzing tempAA with tempR11
 	for(int i=0; i<64; i++){
 		tempAA[i]=tempR11[i];
-	}	
+	}
 //	Multiplication logic
 	for(int j=1; j<n; j++){
 		i = 64;
@@ -1277,32 +1299,32 @@ void mul(int z, int x, int y){
 			i--;
 		}
 	}
-	
+
 	bool temp[32];
 	for(int i=0; i<32; i++){
 		temp[i]=tempAA[i+32];
 	}
-// function to decide which register is deffined by z	
-	findDestinationRegister(z, temp);	
-	
-// flag updateing 
-	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; printf("There is a overflow after MUL operation !!!");break;} }	
+// function to decide which register is deffined by z
+	findDestinationRegister(z, temp);
+
+// flag updateing
+	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; printf("There is a overflow after MUL operation !!!");break;} }
 	if(convertBinaryTodecimal(temp,32) == 0){ zeroFlag = 1;}
 }
 
-// Addition function - Takes three register numbers as input (z,x,y) and addition 'x' register and 'y' register and stores the result in 'z' register 
+// Addition function - Takes three register numbers as input (z,x,y) and addition 'x' register and 'y' register and stores the result in 'z' register
 void add(int z, int x, int y) {
-	
+
 	int i = 31;
 	bool carry=0, temp1=0, temp2=0, sum=0;
-	bool tempR1[32], tempR2[32], tempA[32]; 
+	bool tempR1[32], tempR2[32], tempA[32];
 
-//	function to decide which register is deffined by x	
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
-		
+
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
-	
+
 	while(i>=0){
 		sum = (tempR1[i]^tempR2[i]) ^ carry;
 		temp1 = tempR1[i] & tempR2[i];
@@ -1311,31 +1333,31 @@ void add(int z, int x, int y) {
 		tempA[i] = sum;
 		i--;
 	}
-	
-// function to decide which register is deffined by z	
+
+// function to decide which register is deffined by z
 	findDestinationRegister(z, tempA);
-	
-// flag updateing 
-	if(carry == 1){carryFlag = 1; overflowFlag = 1; printf("There is a overflow and carry after ADD operation !!!");}
+
+// flag updateing
+	if(carry == 1){carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; printf("There is a overflow and carry after ADD operation !!!");}
 }
 
-// Substract function - Takes three register numbers as input (z,x,y) and substract 'x' register and 'y' register and stores the result in 'z' register 
+// Substract function - Takes three register numbers as input (z,x,y) and substract 'x' register and 'y' register and stores the result in 'z' register
 void sub(int z, int x, int y){
-	
+
 	int i = 31;
 	bool carry=0, temp1=0, temp2=0, sum=0;
-	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32]; 
-		
-//	function to decide which register is deffined by x	
-	findSourceRegister(x,tempR1);	
+	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
+
+//	function to decide which register is deffined by x
+	findSourceRegister(x,tempR1);
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
-	
+
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 	for(int i=0; i<32; i++){
 		tempRX[i] = !tempR2[i];
 	}
-	
+
 	while(i>=0){
 		sum = (tempRX[i]^tempRY[i]) ^ carry;
 		temp1 = tempRX[i] & tempRY[i];
@@ -1343,8 +1365,8 @@ void sub(int z, int x, int y){
 		carry = temp1 | temp2;
 		tempA1[i] = sum;
 		i--;
-	}		
-	
+	}
+
 	i = 31;
 	while(i>=0){
 		sum = (tempA1[i] ^ tempR1[i]) ^ carry;
@@ -1354,34 +1376,34 @@ void sub(int z, int x, int y){
 		tempA2[i] = sum;
 		i--;
 	}
-	
-// function to decide which register is deffined by z	
-	findDestinationRegister(z, tempA2);			
-	
-// flag updateing 
-	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) { 
-		signFlag = 1; overflowFlag = 1; 
-		printf("There is a overflow after SUB operation !!!"); 
-	}	
-	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { zeroFlag = 1; } 
-	
+
+// function to decide which register is deffined by z
+	findDestinationRegister(z, tempA2);
+
+// flag updateing
+	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
+		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
+		printf("There is a overflow after SUB operation !!!");
+	}
+	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { zeroFlag = 1; signFlag = 0; overflowFlag = 1; carryFlag = 0;}
+
 }
 
 /******************************************************************
  Supporting functions for ALU Operation
  ******************************************************************/
- 
+
 // Converts hexadecimal input to binary
 
 void convertDecimalToBinary(int dec, bool *result){
-	
+
 	bool bit; bool temp[32];
-	
+
 	for(int i=0; i<32; i++){
 		result[i] = 0;
 		temp[i] = 0;
 	}
-	
+
 	int x=dec, count=0;
 	while(x != 0) {
 		if(bool(x%2) == 1)
@@ -1391,11 +1413,11 @@ void convertDecimalToBinary(int dec, bool *result){
 		count++;
 		x=x/2;
 	}
-	
+
 	for(int i=0, j=31; i<32; i++,j--){
 		result[j]=temp[i];
 	}
-		
+
 }
 
 
@@ -1414,115 +1436,115 @@ int convertBinaryTodecimal(bool *bits, int loc){
 		}
 		counter++;
 	}
-	
+
 	return decimal;
 }
 
 
 void findSourceRegister(int x, bool *tempR1){
 
-//	Switch case to deside which register is deffined by x	
+//	Switch case to deside which register is deffined by x
 	switch(x){
-		
-		case 0: 
+
+		case 0:
 			for(int i=0; i<32; i++){
 				tempR1[i] = A[i];
 			}
 			break;
-			
-		case 1: 
+
+		case 1:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R1[i];
 			}
 			break;
 
-		case 2: 
+		case 2:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R2[i];
 			}
 			break;
 
-		case 3: 
+		case 3:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R3[i];
 			}
 			break;
-			
-		case 4: 
+
+		case 4:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R4[i];
 			}
 			break;
-			
-		case 5: 
+
+		case 5:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R5[i];
 			}
 			break;
-			
-		case 6: 
+
+		case 6:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R6[i];
 			}
 			break;
-			
-		case 7: 
+
+		case 7:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R7[i];
 			}
 			break;
-			
-		case 8: 
+
+		case 8:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R8[i];
 			}
 			break;
-			
-		case 9: 
+
+		case 9:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R9[i];
 			}
 			break;
 
-		case 10: 
+		case 10:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R10[i];
 			}
 			break;
 
-		case 11: 
+		case 11:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R11[i];
 			}
 			break;
-			
-		case 12: 
+
+		case 12:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R12[i];
 			}
 			break;
-			
-		case 13: 
+
+		case 13:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R13[i];
 			}
 			break;
-			
-		case 14: 
+
+		case 14:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R14[i];
 			}
 			break;
-			
-		case 15: 
+
+		case 15:
 			for(int i=0; i<32; i++){
 				tempR1[i] = R15[i];
 			}
 			break;
-			
-		default: 
+
+		default:
 			printf("\nWrong register input !!! \n");
-			break;		
+			break;
 	}
 }
 
@@ -1530,107 +1552,105 @@ void findDestinationRegister(int z, bool *tempA){
 
 //	Switch case to deside which register is deffined by z
 	switch(z){
-		
-		case 0: 
+
+		case 0:
 			for(int i=0; i<32; i++){
 				A[i] = tempA[i];
 			}
 			break;
-			
-		case 1: 
+
+		case 1:
 			for(int i=0; i<32; i++){
 				R1[i] = tempA[i];
 			}
 			break;
 
-		case 2: 
+		case 2:
 			for(int i=0; i<32; i++){
 				R2[i] = tempA[i];
 			}
 			break;
 
-		case 3: 
+		case 3:
 			for(int i=0; i<32; i++){
 				R3[i] = tempA[i];
 			}
 			break;
-			
-		case 4: 
+
+		case 4:
 			for(int i=0; i<32; i++){
 				R4[i] = tempA[i];
 			}
 			break;
-			
-		case 5: 
+
+		case 5:
 			for(int i=0; i<32; i++){
 				R5[i] = tempA[i];
 			}
 			break;
-			
-		case 6: 
+
+		case 6:
 			for(int i=0; i<32; i++){
 				R6[i] = tempA[i];
 			}
 			break;
-			
-		case 7: 
+
+		case 7:
 			for(int i=0; i<32; i++){
 				R7[i] = tempA[i];
 			}
 			break;
-			
-		case 8: 
+
+		case 8:
 			for(int i=0; i<32; i++){
 				R8[i] = tempA[i];
 			}
 			break;
-			
-		case 9: 
+
+		case 9:
 			for(int i=0; i<32; i++){
 				R9[i] = tempA[i];
 			}
 			break;
 
-		case 10: 
+		case 10:
 			for(int i=0; i<32; i++){
 				R10[i] = tempA[i];
 			}
 			break;
 
-		case 11: 
+		case 11:
 			for(int i=0; i<32; i++){
 				R11[i] = tempA[i];
 			}
 			break;
-			
-		case 12: 
+
+		case 12:
 			for(int i=0; i<32; i++){
 				R12[i] = tempA[i];
 			}
 			break;
-			
-		case 13: 
+
+		case 13:
 			for(int i=0; i<32; i++){
 				R13[i] = tempA[i];
 			}
 			break;
-			
-		case 14: 
+
+		case 14:
 			for(int i=0; i<32; i++){
 				R14[i] = tempA[i];
 			}
 			break;
-			
-		case 15: 
+
+		case 15:
 			for(int i=0; i<32; i++){
 				R15[i] = tempA[i];
 			}
 			break;
-			
-		default: 
+
+		default:
 			printf("\nWrong register input !!! \n");
-			break;		
-	}	
+			break;
+	}
 }
-
-
