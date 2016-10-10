@@ -1448,7 +1448,7 @@ void findSourceRegister(int x, bool *tempR1){
 
 		case 0:
 			for(int i=0; i<32; i++){
-				tempR1[i] = A[i];
+				tempR1[i] = R0[i]; 
 			}
 			break;
 
@@ -1555,7 +1555,7 @@ void findDestinationRegister(int z, bool *tempA){
 
 		case 0:
 			for(int i=0; i<32; i++){
-				A[i] = tempA[i];
+				R0[i] = tempA[i];
 			}
 			break;
 
