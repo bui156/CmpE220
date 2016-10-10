@@ -1,4 +1,4 @@
-// Please save this as ".h" file
+# include <string.h>
 
 /**
  * Converts hexadecimal input to binary
@@ -46,7 +46,7 @@ char* covertHexToBinary(char *bits){
 /**
  * Converts Binary to Decimal of input
  */
-int convertBinaryTodecimal(char *bits){
+int convertBinaryToDecimal(char *bits){
 
 	int counter = 0;
 	int decimal = 0;
