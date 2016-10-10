@@ -8,6 +8,7 @@
 # include <unistd.h>
 # include <iostream>
 # include <fstream>
+# include <cstdlib>
 
 using namespace std;
 
@@ -124,6 +125,9 @@ void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
 int convertBinaryTodecimal(bool *bits, int);
 void convertDecimalToBinary(int dec, bool *result);
+int MemoryAddressing(int imm, int rdx, int rcx, int S);
+int StringMemoryAddressing(string str);
+int StringRegistersToInt(string strNew);
 
 int main(){
 
@@ -355,7 +359,8 @@ void memoryDump() {
 	cout<<endl<<endl;
 	printf("Memory: HEX: DEC\n");
 
-	for(int i = 1024; i<=2055; i++) {
+	//for(int i = 1024; i<=2055; i++) {
+	for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
 		printf(" Memory Location: %X: ",i);
 		char vOut[9];
 		for(int j=0;j<8;j++){
@@ -406,13 +411,40 @@ void decodeInstructionFromFile(string textLine){
 
 	pch = strtok((char*)textLine.c_str()," ,\r");
 
-	while (pch != NULL){
-		instructionIntoMemory(pch,startMemLocation);
-		startMemLocation++;
-		pch = strtok (NULL, " ,\r");
+	while (pch != NULL)
+	{
+		if(strcmp(pch,"MFA")==0){
+			cout<<"IN MFA"<<endl;
+			pch = strtok (NULL, " ");
+			//Call Nishants Function with pch
+			int memaddr = StringMemoryAddressing(pch);
+			cout << "MemoryAddressing = " << memaddr << endl;
+			cout<<"THE PCH TO PASS: "<<pch<<endl;
+			//mov from MemoryAddressing to Accumulator
+			STA(memaddr);
+			cout << "updated accumulator" << endl;
+			pch = strtok (NULL, " ,\r");
+		}else
+			if(strcmp(pch,"MTA")==0){
+				cout<<"IN MTA"<<endl;
+				pch = strtok (NULL, " ");
+				//Call Nishants Function with pch
+				int memaddr = StringMemoryAddressing(pch);
+				cout << "MemoryAddressing = " << memaddr << endl;
+				cout<<"THE PCH TO PASS: "<<pch<<endl;
+				//mov from Accumulator to MemoryAddressing
+				LDA(memaddr);
+				cout << "updated MemoryAddress" << endl;
+				pch = strtok (NULL, " ,\r");
+			}else{
+				cout<<"IN ELSE"<<endl;
+				instructionIntoMemory(pch,startMemLocation);
+				startMemLocation++;
+				pch = strtok (NULL, " ,\r");
+			}
 	}
 
-	return;
+	return ;
 }
 
 //Converts operand into bits and stores into memory.
@@ -549,6 +581,73 @@ void instructionIntoMemory(char* token,int memLocation) {
 																						}
 																					}
 }
+/****************************************
+ * MemoryAddressing
+ */
+int MemoryAddressing(int imm=0, int rdx=0, int rcx=0, int S=1){
+	int address;
+	address  = imm + rdx + rcx*S;
+	return address;
+}
+/*************************************************************
+ *
+ *************************************************************/
+int StringMemoryAddressing(string str){
+	unsigned first = 0;
+	unsigned last = str.find('(');
+	string strNew = str.substr (first,last-first);
+	long int int_value1 = std::strtol(strNew.c_str(), 0, 16);
+
+	first = str.find('(');
+	last = str.find(',');
+	strNew = str.substr (first+1,last-first-1);
+	//long int int_value2 = std::strtol(strNew.c_str(), 0, 16);
+	//cout << strNew << endl;
+	int int_value2 = StringRegistersToInt(strNew);
+	//cout << "int_value2=" << int_value2 << endl;
+
+	first = str.find(',',last);
+	last = str.find(',',last+1);
+	strNew = str.substr (first+1,last-first-1);
+	//long int int_value3 = std::strtol(strNew.c_str(), 0, 16);
+	//cout << strNew << endl;
+	int int_value3 = StringRegistersToInt(strNew);
+	//cout << "int_value3=" << int_value3 << endl;
+
+	first = str.find(',',last);
+	last = str.find(')',last+1);
+	strNew = str.substr (first+1,last-first-1);
+	long int int_value4 = std::strtol(strNew.c_str(), 0, 10);
+
+	int addr = MemoryAddressing(int_value1,int_value2,int_value3,int_value4);
+	return addr;
+	//return 0;
+}
+/*************************************************************
+ *
+ *************************************************************/
+int StringRegistersToInt(string strNew){
+	char vOut[33];
+	if(strcmp(strNew.c_str(),"R1")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R1[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R2")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R2[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R3")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R3[i] ? '1' : '0';
+		}
+	}
+
+	int ret = strtol(vOut, NULL, 2);
+	return ret;
+}
+
 /*************************************************************/
 // This function reads an byte of memory and decodes it into
 // its appropriate instruction/operand.
@@ -956,8 +1055,8 @@ void callAppropriateFunction(){
 		sub(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
 		mul(instructionOperand1, instructionOperand2, instructionOperand3);
-	else if (instructionOperation==131)
-		div(instructionOperand1, instructionOperand2, instructionOperand3);
+	//else if (instructionOperation==131)
+		//div(instructionOperand1, instructionOperand2, instructionOperand3);
 /*
 	else if (instructionOperation==132)
 		mod(instructionOperand1, instructionOperand2, instructionOperand3);
