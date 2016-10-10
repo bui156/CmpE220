@@ -663,6 +663,11 @@ int StringMemoryAddressing(string str){
  *************************************************************/
 int StringRegistersToInt(string strNew){
 	char vOut[33];
+	if(strcmp(strNew.c_str(),"R0")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R0[i] ? '1' : '0';
+		}
+	}
 	if(strcmp(strNew.c_str(),"R1")==0){
 		for(int i = 0; i < 32; i++){
 			vOut[i] = R1[i] ? '1' : '0';
@@ -678,6 +683,66 @@ int StringRegistersToInt(string strNew){
 			vOut[i] = R3[i] ? '1' : '0';
 		}
 	}
+	if(strcmp(strNew.c_str(),"R4")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R4[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R5")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R5[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R6")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R6[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R7")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R7[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R8")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R8[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R9")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R9[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R10")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R10[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R11")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R11[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R12")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R12[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R13")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R13[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R14")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R14[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R15")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R15[i] ? '1' : '0';
+			}
+		}
 
 	int ret = strtol(vOut, NULL, 2);
 	return ret;
@@ -1083,18 +1148,20 @@ void decodeInstructionOperationOperand(){
  the appropriate function.
  *******************************************/
 void callAppropriateFunction(){
+	void (*add_ptr)(int,int,int) = &add; void (*sub_ptr)(int,int,int) = &sub; void (*mul_ptr)(int,int,int) = &mul; 
+	void (*div_ptr)(int,int,int) = &div; void (*mod_ptr)(int,int,int) = &mod; void (*mov_ptr)(int,int,int) = &mov;
 	if (instructionOperation==128){
-		add(instructionOperand1, instructionOperand2, instructionOperand3);
+		(*add_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
 		cout<<"add"<<endl;
 	}
 	else if (instructionOperation==129)
-		sub(instructionOperand1, instructionOperand2, instructionOperand3);
+		(*sub_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
-		mul(instructionOperand1, instructionOperand2, instructionOperand3);
+		(*mul_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==131)
-		div(instructionOperand1, instructionOperand2, instructionOperand3);
+		(*div_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==132)
-		mod(instructionOperand1, instructionOperand2, instructionOperand3);
+		(*mod_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
 	/*
 	else if (instructionOperation==133)
 		lda();
@@ -1102,7 +1169,7 @@ void callAppropriateFunction(){
 		sta();
 	*/
 	else if (instructionOperation==135)
-		mov(instructionOperand1, instructionOperand2, instructionOperand3);
+		(*mov_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
 
 	return;
 }
@@ -1448,7 +1515,7 @@ void findSourceRegister(int x, bool *tempR1){
 
 		case 0:
 			for(int i=0; i<32; i++){
-				tempR1[i] = R0[i]; 
+				tempR1[i] = R0[i];
 			}
 			break;
 
