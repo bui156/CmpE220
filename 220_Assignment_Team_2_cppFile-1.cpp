@@ -23,7 +23,6 @@ bool accumulator [32] = {1,1,1,1,1,1,1,1,
 						 0,0,0,0,0,0,0,1};
 bool memoryAddressRegister [32];
 bool memoryDataRegister [32];
-//bool programCounterRegister [32];
 bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 		                            0,0,0,0,0,0,0,0,
 									0,0,0,0,0,1,0,0,
@@ -31,7 +30,8 @@ bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 int startMemLocation = 1024;
 
 //Opcodes for Registers
-bool Exit_Opcode [8] = {1,0,1,0,1,0,1,0}; //AAh, 170d
+char tmpExit_Opcode [8] = {'1','0','1','0','1','0','1','0'};
+bool exit_Opcode [8] = {1,0,1,0,1,0,1,0}; //AAh, 170d
 bool R0_Opcode [8] = {0,0,0,0,0,0,0,1};	//1
 bool R1_Opcode [8] = {0,0,0,0,0,0,1,0}; //2
 bool R2_Opcode [8] = {0,0,0,0,0,0,1,1}; //3
@@ -61,16 +61,22 @@ bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
-bool R1 [32];
+bool R1 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1}; //1
 bool R2 [32] = {0,0,0,0,0,0,0,0,
 		        0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,1};
+				0,0,0,0,0,0,1,0}; //2
 bool R3 [32] = {0,0,0,0,0,0,0,0,
 			    0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,1,0};
-bool R4 [32];
+				0,0,0,0,0,0,1,1}; //3
+bool R4 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1}; //4
 bool R5 [32];
 bool R6 [32];
 bool R7 [32];
@@ -96,6 +102,7 @@ int instructionOperation = 0;
 int instructionOperand1 = 0;
 int instructionOperand2 = 0;
 int instructionOperand3 = 0;
+int exitCodeCount = 0;
 
 //Fuction prototype for different user difined functions
 void LDA(int); //This function will copy the contents of 4 consecutive bytes starting from the specified byte address into accumulator
@@ -110,11 +117,13 @@ void getCurrentInstruction();
 void decodeInstructionOperationOperand();
 void callAppropriateFunction();
 void add(int z, int x, int y);
-//void sub(int z, int x, int y);
-//void mul(int z, int x, int y);
-//void div(int z, int x, int y);
+void sub(int z, int x, int y);
+void mul(int z, int x, int y);
+void div(int z, int x, int y);
 void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
+int convertBinaryTodecimal(bool *bits, int);
+void convertDecimalToBinary(int dec, bool *result);
 
 int main(){
 
@@ -131,10 +140,15 @@ int main(){
 
 	//Start Program
 	cout<<"Starting Program"<<endl;
-	getCurrentInstruction();
-	parseInstructionFromMemory();
-	decodeInstructionOperationOperand();
-	callAppropriateFunction();
+	startMemLocation=1024;
+	while (exitCodeCount != 8){
+		getCurrentInstruction();
+		parseInstructionFromMemory();
+		if (exitCodeCount != 8){
+			decodeInstructionOperationOperand();
+			callAppropriateFunction();
+		}
+	}
 
 	for (int i = 0; i < 32; i++){
 		printf("%c", currentInstruction[i]);
@@ -368,23 +382,20 @@ void readFromFile(string fileName){
 	if(access(fileName.c_str(),F_OK) != -1){
 
 		while(true){
-
 			getline(textFile,textLine);
 
 			decodeInstructionFromFile(textLine);
 
-			if(textFile.eof()){
+			if(textFile.eof())
 				break;
-			}
-
 		}
 		textFile.close();
 
-	}else{
+	}
+	else{
 		cout<<"FILE DOES NOT EXIST"<<endl;
 		cerr<<"The requested file"<<fileName<<" does not exist"<<endl;
 	}
-
 }
 
 //Reads in Instruction from Text File
@@ -395,13 +406,13 @@ void decodeInstructionFromFile(string textLine){
 
 	pch = strtok((char*)textLine.c_str()," ,\r");
 
-	while (pch != NULL)
-	{
+	while (pch != NULL){
 		instructionIntoMemory(pch,startMemLocation);
 		startMemLocation++;
 		pch = strtok (NULL, " ,\r");
 	}
 
+	return;
 }
 
 //Converts operand into bits and stores into memory.
@@ -534,7 +545,7 @@ void instructionIntoMemory(char* token,int memLocation) {
 																					if(strcmp(token,"EXIT")==0){
 																						cout<<"EXIT CODE"<<endl;
 																						for (int i = 0; i < 8; i++){
-																							memory[memLocation][i] = Exit_Opcode[i];
+																							memory[memLocation][i] = exit_Opcode[i];
 																						}
 																					}
 }
@@ -562,6 +573,13 @@ void parseInstructionFromMemory(){
 			operand3[i-24] = currentInstruction[i];
 	}
 
+	exitCodeCount = 0; //Reset Exit Code Count in case it was incremented by other codes matching "part" of the exit code.
+
+	for (int i = 0; i < 8; i++){
+		if (operation[i] == tmpExit_Opcode[i])
+			exitCodeCount++;
+	}
+
 	/*
 	operation[9] = '\0';
 	operand1[9] = '\0';
@@ -580,6 +598,7 @@ void parseInstructionFromMemory(){
 //         Global Variable currentInstruction[32]
 /*************************************************************/
 void getCurrentInstruction(){
+	/*
 	//Read Value from Program Counter Instruction
 	char tempMemoryLocation[32]; //Will convert bool programCounterRegster to char programCounterRegister
 
@@ -614,6 +633,22 @@ void getCurrentInstruction(){
 	//Increment Program Counter + 4
 	//programCounterRegister + 4
 	return;
+	*/
+
+	for (int i = 0; i < 32; i++){
+		if (i >= 0 && i <= 7)
+			currentInstruction[i] = memory[startMemLocation][i] ? '1' : '0';
+		if (i >= 8 && i <= 15)
+			currentInstruction[i] = memory[startMemLocation+1][i-8] ? '1' : '0';
+		if (i >= 16 && i <= 23)
+			currentInstruction[i] = memory[startMemLocation+2][i-16] ? '1' : '0';
+		if (i >= 24 && i <= 31)
+			currentInstruction[i] = memory[startMemLocation+3][i-24] ? '1' : '0';
+	}
+	currentInstruction[33] = '\0';
+
+	startMemLocation += 4;
+
 }
 /*******************************************
  * This function changes the operation/opcode
@@ -913,17 +948,17 @@ void decodeInstructionOperationOperand(){
  the appropriate function.
  *******************************************/
 void callAppropriateFunction(){
-	if (instructionOperation==128)
+	if (instructionOperation==128){
 		add(instructionOperand1, instructionOperand2, instructionOperand3);
-/*
-	if (instructionOperation==128)
-		add(instructionOperand1, instructionOperand2, instructionOperand3);
+		cout<<"add"<<endl;
+	}
 	else if (instructionOperation==129)
 		sub(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
 		mul(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==131)
 		div(instructionOperand1, instructionOperand2, instructionOperand3);
+/*
 	else if (instructionOperation==132)
 		mod(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==133)
@@ -941,10 +976,10 @@ void add(int z, int x, int y) {
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32];
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
 
-//	funtion to decide which register is deffined by y
+//	function to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	while(i>=0){
@@ -956,7 +991,7 @@ void add(int z, int x, int y) {
 		i--;
 	}
 
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, tempA);
 /*
 	printf("Addition: \n");
@@ -977,10 +1012,161 @@ void add(int z, int x, int y) {
 */
 
 }
+void sub(int z, int x, int y){
+
+	int i = 31;
+	bool carry=0, temp1=0, temp2=0, sum=0;
+	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
+
+//	function to decide which register is defined by x
+	findSourceRegister(x,tempR1);
+//	function to decide which register is defined by y
+	findSourceRegister(y,tempR2);
+
+	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+	for(int i=0; i<32; i++){
+		tempRX[i] = !tempR2[i];
+	}
+
+	while(i>=0){
+		sum = (tempRX[i]^tempRY[i]) ^ carry;
+		temp1 = tempRX[i] & tempRY[i];
+		temp2 = (tempRX[i] ^ tempRY[i]) & carry;
+		carry = temp1 | temp2;
+		tempA1[i] = sum;
+		i--;
+	}
+
+	i = 31;
+
+	while(i>=0){
+		sum = (tempA1[i] ^ tempR1[i]) ^ carry;
+		temp1 = tempA1[i] & tempR1[i];
+		temp2 = (tempA1[i] ^ tempR1[i]) & carry;
+		carry = temp1 | temp2;
+		tempA2[i] = sum;
+		i--;
+	}
+
+// function to decide which register is defined by z
+	findDestinationRegister(z, tempA2);
+
+}
+
+void mul(int z, int x, int y){
+
+	int i;
+	bool carry=0, temp1=0, temp2=0, sum=0;
+	bool tempR1[32], tempR2[32], tempR11[64], tempR22[64], tempA[32], tempAA[64];
+
+//	function to decide which register is defined by x
+	findSourceRegister(x,tempR1);
+//	function to decide which register is defined by y
+	findSourceRegister(y,tempR2);
+
+	int n = convertBinaryTodecimal(tempR2,32);
+
+//	Debugging
+	int n1 = convertBinaryTodecimal(tempR1, 32);
+	int n2 = convertBinaryTodecimal(tempR2, 32);
+
+//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplication
+	for(int i=0; i<64; i++){
+
+		if(i<=31){
+			tempR11[i] = 0;
+			tempR22[i] = 0;
+		}
+		else{
+			tempR11[i] = tempR1[i-32];
+			tempR22[i] = tempR2[i-32];
+		}
+	}
+
+//	Initializing tempAA with tempR11
+	for(int i=0; i<64; i++){
+		tempAA[i]=tempR11[i];
+	}
+//	Multiplication logic
+	for(int j=1; j<n; j++){
+		i = 64;
+		while(i>=0){
+			sum = (tempR11[i]^tempAA[i]) ^ carry;
+			temp1 = tempR11[i] & tempAA[i];
+			temp2 = (tempR11[i]^tempAA[i]) & carry;
+			carry = temp1 | temp2;
+			tempAA[i] = sum;
+			i--;
+		}
+	}
+
+	bool temp[32];
+	for(int i=0; i<32; i++){
+		temp[i]=tempAA[i+32];
+	}
+// function to decide which register is defined by z
+	findDestinationRegister(z, temp);
+
+// Debugging
+
+	unsigned int n3 = convertBinaryTodecimal(tempAA, 64);
+	unsigned int n4 = convertBinaryTodecimal(tempR11, 64);
+	unsigned int n5 = convertBinaryTodecimal(tempR22, 64);
+	printf("\n%d * %d = %d\n", n1,n,n3);
+	printf("\n%d * %d = %d\n", n4,n5,n3);
+}
+
+/***************************************************
+ * Divide Function
+ ***************************************************/
+
+/***************************************************
+ * Modulus Function
+ ***************************************************/
+
+/**
+ * Converts hexadecimal input to binary
+ */
+void convertDecimalToBinary(int dec, bool *result){
+
+	bool bit;
+	for(int i=0; i<32; i++){
+		result[i] = 0;
+	}
+
+	int x=dec, count=0;
+	while(x != 0) {
+		bit = bool(x%2);
+		result[count]=bit;
+		count++;
+		x=x/2;
+	}
+}
+
+
+/**
+ * Converts binary input to decimal
+ */
+int convertBinaryTodecimal(bool *bits, int loc){
+
+	int counter = 0;
+	int decimal = 0;
+	//int loc = strlen(bits);
+
+	while (counter < loc)
+	{
+		if(*(bits+counter) == 1){
+			decimal = (decimal + pow(2,(loc-counter)-1));
+		}
+		counter++;
+	}
+
+	return decimal;
+}
 
 void findSourceRegister(int x, bool *tempR1){
 
-//	Switch case to deside which register is deffined by x
+//	Switch case to decide which register is defined by x
 	switch(x){
 
 		case 0:
@@ -1088,103 +1274,86 @@ void findSourceRegister(int x, bool *tempR1){
 void findDestinationRegister(int z, bool *tempA){
 
 	switch(z){
-
 		case 0:
 			for(int i=0; i<32; i++){
 				A[i] = tempA[i];
 			}
 			break;
-
 		case 1:
 			for(int i=0; i<32; i++){
 				R1[i] = tempA[i];
 			}
 			break;
-
 		case 2:
 			for(int i=0; i<32; i++){
 				R2[i] = tempA[i];
 			}
 			break;
-
 		case 3:
 			for(int i=0; i<32; i++){
 				R3[i] = tempA[i];
 			}
 			break;
-
 		case 4:
 			for(int i=0; i<32; i++){
 				R4[i] = tempA[i];
 			}
 			break;
-
 		case 5:
 			for(int i=0; i<32; i++){
 				R5[i] = tempA[i];
 			}
 			break;
-
 		case 6:
 			for(int i=0; i<32; i++){
 				R6[i] = tempA[i];
 			}
 			break;
-
 		case 7:
 			for(int i=0; i<32; i++){
 				R7[i] = tempA[i];
 			}
 			break;
-
 		case 8:
 			for(int i=0; i<32; i++){
 				R8[i] = tempA[i];
 			}
 			break;
-
 		case 9:
 			for(int i=0; i<32; i++){
 				R9[i] = tempA[i];
 			}
 			break;
-
 		case 10:
 			for(int i=0; i<32; i++){
 				R10[i] = tempA[i];
 			}
 			break;
-
 		case 11:
 			for(int i=0; i<32; i++){
 				R11[i] = tempA[i];
 			}
 			break;
-
 		case 12:
 			for(int i=0; i<32; i++){
 				R12[i] = tempA[i];
 			}
 			break;
-
 		case 13:
 			for(int i=0; i<32; i++){
 				R13[i] = tempA[i];
 			}
 			break;
-
 		case 14:
 			for(int i=0; i<32; i++){
 				R14[i] = tempA[i];
 			}
 			break;
-
 		case 15:
 			for(int i=0; i<32; i++){
 				R15[i] = tempA[i];
 			}
 			break;
-
 		default:
 			printf("\nWrong register input !!! \n");
 			break;
