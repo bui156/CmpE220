@@ -546,6 +546,11 @@ int StringMemoryAddressing(string str){
 
 int StringRegistersToInt(string strNew){
 	char vOut[33];
+	if(strcmp(strNew.c_str(),"R0")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R0[i] ? '1' : '0';
+		}
+	}
 	if(strcmp(strNew.c_str(),"R1")==0){
 		for(int i = 0; i < 32; i++){
 			vOut[i] = R1[i] ? '1' : '0';
@@ -561,6 +566,66 @@ int StringRegistersToInt(string strNew){
 			vOut[i] = R3[i] ? '1' : '0';
 		}
 	}
+	if(strcmp(strNew.c_str(),"R4")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R4[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R5")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R5[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R6")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R6[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R7")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R7[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R8")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R8[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R9")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R9[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R10")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R10[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R11")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R11[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R12")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R12[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R13")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R13[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R14")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R14[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R15")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R15[i] ? '1' : '0';
+			}
+		}
 
 	int ret = strtol(vOut, NULL, 2);
 	return ret;
