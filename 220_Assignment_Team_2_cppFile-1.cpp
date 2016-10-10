@@ -505,6 +505,12 @@ void instructionIntoMemory(char* token,int memLocation) {
 							memory[memLocation][i] = MOD_Opcode[i];
 						}
 					}else
+						if(strcmp(token,"MOV")==0){
+							cout<<"IN MOV"<<endl;
+							for (int i = 0; i < 8; i++){
+								memory[memLocation][i] = MOV_Opcode[i];
+							}
+						}else
 					if(strcmp(token,"R0")==0){
 						cout<<"IN R0"<<endl;
 						for (int i = 0; i < 8; i++){
@@ -1089,14 +1095,15 @@ void callAppropriateFunction(){
 		div(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==132)
 		mod(instructionOperand1, instructionOperand2, instructionOperand3);
-/*
+	/*
 	else if (instructionOperation==133)
 		lda();
 	else if (instructionOperation==134)
 		sta();
+	*/
 	else if (instructionOperation==135)
-		mov();
-*/
+		mov(instructionOperand1, instructionOperand2, instructionOperand3);
+
 	return;
 }
 
