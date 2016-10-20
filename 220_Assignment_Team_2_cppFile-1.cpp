@@ -30,6 +30,7 @@ bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 									0,0,0,0,0,1,0,0,
 									0,0,0,0,0,0,0,0};
 int startMemLocation = 1024;
+int operationType = 0;
 
 //Opcodes for Registers
 char tmpExit_Opcode [8] = {'1','0','1','0','1','0','1','0'};
@@ -50,7 +51,11 @@ bool R12_Opcode [8] = {0,0,0,0,1,1,0,1}; //13
 bool R13_Opcode [8] = {0,0,0,0,1,1,1,0}; //14
 bool R14_Opcode [8] = {0,0,0,0,1,1,1,1}; //15
 bool R15_Opcode [8] = {0,0,0,1,0,0,0,0}; //16
-
+/*
+bool L1_Opcode [8] = {0,0,0,1,0,0,0,1};	//17
+bool L2_Opcode [8] = {0,0,0,1,0,0,1,0};	//18
+bool L3_Opcode [8] = {0,0,0,1,0,0,1,1};	//19
+*/
 //Opcodes for ALU Operations
 bool ADD_Opcode [8] = {1,0,0,0,0,0,0,0}; //128
 bool SUB_Opcode [8] = {1,0,0,0,0,0,0,1}; //129
@@ -60,6 +65,14 @@ bool MOD_Opcode [8] = {1,0,0,0,0,1,0,0}; //132
 bool LDA_Opcode [8] = {1,0,0,0,0,1,0,1}; //133
 bool STA_Opcode [8] = {1,0,0,0,0,1,1,0}; //134
 bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
+/*
+bool MVI_Opcode [8] = {1,0,0,0,1,0,0,0}; //136
+bool JMP_Opcode [8] = {1,0,0,0,1,0,0,1}; //137
+bool JGE_Opcode [8] = {1,0,0,0,1,0,1,0}; //138
+bool JLE_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
+bool JNE_Opcode [8] = {1,0,0,0,1,1,0,1}; //140
+*/
+
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
@@ -112,11 +125,11 @@ void STA(int); //This function will copy the contents of accumulator into 4 cons
 void validDataMemoryAddressCheck(int memoryLocation);
 void memoryDump();
 void readFromFile(string fileName);
-void decodeInstructionFromFile(string textLine);
 void instructionIntoMemory(char* token,int memLocation);
+////////////////////////////////////////////////
 void parseInstructionFromMemory();
 void getCurrentInstruction();
-void decodeInstructionOperationOperand();
+void decodeALUInstructionOperands();
 void callAppropriateFunction();
 //void add(int z, int x, int y);
 //void sub(int z, int x, int y);
@@ -160,10 +173,16 @@ int main(){
 	cout<<"Starting Program"<<endl;
 	startMemLocation=1024;
 	while (exitCodeCount != 8){
+		operationType = 0;
 		getCurrentInstruction();
 		parseInstructionFromMemory();
 		if (exitCodeCount != 8){
-			decodeInstructionOperationOperand();
+			if (operationType == 1)//ALU Type Instruction: Operation, Operand1, Operand2, Operand3
+				decodeALUInstructionOperands();
+			else if (operationType ==2) //MVI Instruction
+				;
+			else if (operationType ==3) //JMP Instruction
+				;
 			callAppropriateFunction();
 		}
 	}
@@ -755,6 +774,95 @@ int StringRegistersToInt(string strNew){
 /*************************************************************/
 void parseInstructionFromMemory(){
 	//Start of Instruction Memory is 1024 --> startMemLocation
+	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
+		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
+		//mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0;
+
+	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
+		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8];
+		//tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8];
+
+	for (int i = 0; i< 8; i++){
+		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
+		tmpSUB_Opcode[i] = SUB_Opcode[i] ? '1' : '0';
+		tmpMUL_Opcode[i] = MUL_Opcode[i] ? '1' : '0';
+		tmpDIV_Opcode[i] = DIV_Opcode[i] ? '1' : '0';
+		tmpMOD_Opcode[i] = MOD_Opcode[i] ? '1' : '0';
+		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
+		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
+		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
+		/*
+		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
+		tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
+		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		 */
+	}
+
+	//read in opcode
+	for (int i = 0; i < 8; i++) {
+		operation[i] = currentInstruction[i];
+	}
+
+	//"decode" opcode. Compare with function opcodes.
+	for (int i = 0; i < 8; i++) {
+		if (operation[i]==tmpADD_Opcode[i])
+			addCount++;
+		if (operation[i]==tmpSUB_Opcode[i])
+			subCount++;
+		if (operation[i]==tmpMUL_Opcode[i])
+			mulCount++;
+		if (operation[i]==tmpDIV_Opcode[i])
+			divCount++;
+		if (operation[i]==tmpMOD_Opcode[i])
+			modCount++;
+		if (operation[i]==tmpLDA_Opcode[i])
+			ldaCount++;
+		if (operation[i]==tmpSTA_Opcode[i])
+			staCount++;
+		if (operation[i]==tmpMOV_Opcode[i])
+			movCount++;
+		/*
+		if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+		if (operation[i]==tmpJGE_Opcode[i])
+			jgeCount++;
+		if (operation[i]==tmpJLE_Opcode[i])
+			jleCount++;
+		if (operation[i]==tmpJNE_Opcode[i])
+			jneCount++;
+		*/
+	}
+
+	//if ALU instruction = Operation, Operand1, Operand2, Operand3
+	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 || modCount==8 || ldaCount==8 ||
+			staCount==8 || movCount==8) { //jgeCount==8 || jleCount==8 || jneCount==8
+		operationType = 1; //Set to ALU Type Instruction
+		for (int i = 8; i < 32; i++) {
+			if (i >= 8 && i <= 15)
+				operand1[i-8] = currentInstruction[i];
+			if (i >= 16 && i <= 23)
+				operand2[i-16] = currentInstruction[i];
+			if (i >= 24 && i <= 31)
+				operand3[i-24] = currentInstruction[i];
+		}
+	}
+	/*
+	//MVI Instruction = Operation, Operand1, Operand2 (16-bit?)
+	else if (mviCount==8){
+		operationType = 2;
+
+	}
+	//JMP Instruction = Operation, Operand1 (L1,L2,L3)
+	else if (jmpCount==8){
+		operationType = 3;
+		//Decode operand 1 to L1, L2, L3
+		//startMemLocation = L1,L2,L3
+	}
+	*/
 
 	//first 8 bits are always opcode
 	//next 24 bits are always registers
@@ -850,7 +958,7 @@ void getCurrentInstruction(){
  * This function changes the operation/opcode
  * into an integer value.
  *******************************************/
-void decodeInstructionOperationOperand(){
+void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
 
