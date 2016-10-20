@@ -854,12 +854,18 @@ void parseInstructionFromMemory(){
 	//MVI Instruction = Operation, Operand1, Operand2 (16-bit?)
 	else if (mviCount==8){
 		operationType = 2;
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i]; //Operand1 will have destination Register
+		}
 
 	}
 	//JMP Instruction = Operation, Operand1 (L1,L2,L3)
 	else if (jmpCount==8){
 		operationType = 3;
 		//Decode operand 1 to L1, L2, L3
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i]; //Operand1 will have L1, L2, L3
+		}
 		//startMemLocation = L1,L2,L3
 	}
 	*/
@@ -961,6 +967,9 @@ void getCurrentInstruction(){
 void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
+	/*
+	 *  mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0;
+	 */
 
 	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
 		operand1R4Count = 0, operand1R5Count = 0, operand1R6Count = 0, operand1R7Count = 0,
@@ -983,6 +992,9 @@ void decodeALUInstructionOperands(){
 		 tmpR4_Opcode[8], tmpR5_Opcode[8], tmpR6_Opcode[8], tmpR7_Opcode[8],
 		 tmpR8_Opcode[8], tmpR9_Opcode[8], tmpR10_Opcode[8], tmpR11_Opcode[8],
 		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8];
+	/*
+	 *   tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8];
+	 */
 
 	for (int i = 0; i< 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
@@ -993,6 +1005,13 @@ void decodeALUInstructionOperands(){
 		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
 		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
 		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
+		/*
+		 * tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		 * tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		 * tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
+		 * tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
+		 * tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		 */
 		tmpR0_Opcode[i] = R0_Opcode[i] ? '1' : '0';
 		tmpR1_Opcode[i] = R1_Opcode[i] ? '1' : '0';
 		tmpR2_Opcode[i] = R2_Opcode[i] ? '1' : '0';
@@ -1145,6 +1164,18 @@ void decodeALUInstructionOperands(){
 		instructionOperation=134;
 	else if (movCount==8)
 		instructionOperation=135;
+	/*
+	else if (mviCount==8)
+		instructionOperation=;
+	else if (jmpCount==8)
+		instructionOperation=;
+	else if (jgeCount==8)
+		instructionOperation=;
+	else if (jleCount==8)
+		instructionOperation=;
+	else if (jneCount==8)
+		instructionOperation=;
+	 */
 
 	if (operand1R0Count==8)
 		instructionOperand1=0;
@@ -1273,7 +1304,18 @@ void callAppropriateFunction(){
 	*/
 	else if (instructionOperation==135)
 		mov(instructionOperand1, instructionOperand2, instructionOperand3);
-
+	/*
+	else if (instructionOperation==)
+		mvi(instructionOperand1,);
+	else if (instructionOperation==)
+		jmp(instructionOperand1);
+	else if (instructionOperation==)
+		jge(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==)
+		jle(instructionOperand1, instructionOperand2, instructionOperand3);
+	eles if (instructionOperation==)
+		jne(instructionOperand1, instructionOperand2, instructionOperand3);
+	 */
 	return;
 }
 
