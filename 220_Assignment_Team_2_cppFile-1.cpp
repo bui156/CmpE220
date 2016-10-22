@@ -157,9 +157,9 @@ void div(int z, int x, int y);
 void mod(int z, int x, int y);
 void mov(int z, int x, int y);
 void JEQ(int x, int y, bool *L); //Jump if equal 
-void JIL(int x, int y, bool *L); //Jump if less than
-void JIG(int x, int y, bool *L); //Jump if greater than 
-
+void JLT(int x, int y, bool *L); //Jump if less than
+void JGT(int x, int y, bool *L); //Jump if greater than 
+void JNE(int x, int y, bool *L); //Jump if not equal
 
 int main(){
 
@@ -1212,7 +1212,7 @@ void JEQ(int x, int y, bool *L){ //Jump if equal
 	}
 }
 
-// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is less than the content of register y then stores the array L content into program counter register 	
 void JIL(int x, int y, bool *L){ //Jump if less than
 	
@@ -1225,13 +1225,26 @@ void JIL(int x, int y, bool *L){ //Jump if less than
 	}	
 }
 
-// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is greater than the content of register y then stores the array L content into program counter register 
 void JIG(int x, int y, bool *L){ //Jump if greater than
 
 	sub(0,x,y);
 	unsigned int n = convertBinaryTodecimal(R0,32);
 	if((n > 0) && (overflowFlag==0)){
+		for(int i=0; i<32; i++){
+			programCounterRegister[i] = L[i];
+		} 
+	}
+}
+
+// Jump if not equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is greater than the content of register y then stores the array L content into program counter register
+void JNE(int x, int y, bool *L){ //Jump if not equal
+
+	sub(0,x,y);
+	unsigned int n = convertBinaryTodecimal(R0,32);
+	if(n != 0) {
 		for(int i=0; i<32; i++){
 			programCounterRegister[i] = L[i];
 		} 
