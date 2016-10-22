@@ -1206,7 +1206,7 @@ void JEQ(int x, int y, bool *L){ //Jump if equal
 	sub(0,x,y);
 	unsigned int n = convertBinaryTodecimal(R0,32);
 	if(n == 0){
-		for(int i=0; i<32; i++{
+		for(int i=0; i<32; i++){
 			programCounterRegister[i] = L[i];
 		} 
 	}
@@ -1219,7 +1219,7 @@ void JIL(int x, int y, bool *L){ //Jump if less than
 	sub(0,y,x);
 	unsigned int n = convertBinaryTodecimal(R0,32);
 	if((n > 0) && (overflowFlag==0)){
-		for(int i=0; i<32; i++{
+		for(int i=0; i<32; i++){
 			programCounterRegister[i] = L[i];
 		} 
 	}	
@@ -1232,7 +1232,7 @@ void JIG(int x, int y, bool *L){ //Jump if greater than
 	sub(0,x,y);
 	unsigned int n = convertBinaryTodecimal(R0,32);
 	if((n > 0) && (overflowFlag==0)){
-		for(int i=0; i<32; i++{
+		for(int i=0; i<32; i++){
 			programCounterRegister[i] = L[i];
 		} 
 	}
