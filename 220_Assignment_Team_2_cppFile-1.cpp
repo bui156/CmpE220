@@ -17,7 +17,7 @@ using namespace std;
 //Defining the parts of processor
 bool memory [4096][8];
 bool flags [8];
-bool signFlag=0, overflowFlag=0, zeroFlag=0, carryFlag=0;
+bool signFlag =0, overflowFlag =0, zeroFlag =0, carryFlag =0;
 bool validAddressFlag = 1;
 bool accumulator [32] = {1,1,1,1,1,1,1,1,
 		                 0,0,0,0,0,0,0,1,
@@ -63,33 +63,48 @@ bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
-bool R1 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,1}; //1
-bool R2 [32] = {0,0,0,0,0,0,0,0,
-		        0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,1,0}; //2
+bool R1 [32] = {1,1,1,0,1,1,1,1,
+				1,1,1,1,1,1,1,1,
+				1,1,1,1,1,1,1,1,
+				1,1,1,1,1,1,1,1}; //1
+bool R2 [32] = {1,1,1,1,0,1,1,1,
+				1,1,1,1,1,1,1,1,
+				1,1,1,1,1,1,1,1,
+				1,1,1,1,1,1,1,1}; //2
 bool R3 [32] = {0,0,0,0,0,0,0,0,
 			    0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,1,1}; //3
+				0,0,0,0,0,1,1,1}; //3
 bool R4 [32] = {0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,1,0,0}; //4
-bool R5 [32];
-bool R6 [32];
-bool R7 [32];
+bool R5 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0}; //5
+bool R6 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0}; //6
+bool R7 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,1,1,0,0}; //0xC
 bool R8 [32];
 bool R9 [32];
-bool R10 [32];
-bool R11 [32];
+bool R10 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,1,1,0,0}; //0xC
+bool R11 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,1,0,0}; //4
 bool R12 [32];
 bool R13 [32];
-bool R14 [32];
-bool R15 [32];
+bool R14 [32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+bool R15 [32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1};
 
 //Variables needed in program
 char checkOperend[9];
@@ -141,6 +156,9 @@ void mul(int z, int x, int y);
 void div(int z, int x, int y);
 void mod(int z, int x, int y);
 void mov(int z, int x, int y);
+void JEQ(int x, int y, bool *L); //Jump if equal 
+void JIL(int x, int y, bool *L); //Jump if less than
+void JIG(int x, int y, bool *L); //Jump if greater than 
 
 
 int main(){
@@ -154,26 +172,31 @@ int main(){
 
 	readFromFile(fileName);
 
+	printf("\n***************************************** Memory Dump Number 0 *******************************************\n");
 	memoryDump();
 
 	//Start Program
 	cout<<"Starting Program"<<endl;
-	startMemLocation=1024;
+	startMemLocation=1024; int count = 1;
 	while (exitCodeCount != 8){
 		getCurrentInstruction();
 		parseInstructionFromMemory();
 		if (exitCodeCount != 8){
 			decodeInstructionOperationOperand();
 			callAppropriateFunction();
+			printf("\n***************************************** Memory Dump Number %d *******************************************\n", count);
+			memoryDump();
+			count++;
 		}
 	}
 
+	printf("\n\n\nExit Code found: ");
 	for (int i = 0; i < 32; i++){
 		printf("%c", currentInstruction[i]);
 	}
-	cout<<"Program Finished"<<endl;
+	printf("\n***************************************** Program End !!! *******************************************\n");
 
-	memoryDump();
+	//memoryDump();
 }
 
 void LDA (int finalMemoryLocation) {
@@ -374,14 +397,13 @@ void memoryDump() {
 	vOut[32] = '\0';
 	printf("%X",convertBinaryToDecimal(vOut));
 
+
 	//Memory dump
-	cout<<endl<<endl;
+/*
+	cout<<endl<<endl;	
 	printf("Memory: HEX: DEC\n");
-
-
-	/*
 	//for(int i = 1024; i<=2055; i++) {
-	for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
+	for (int i = 1024; i <= 1104; i++) { //Memory Range of 1024 - 4096
 		printf(" Memory Location: %X: ",i);
 		char vOut[9];
 		for(int j=0;j<8;j++){
@@ -394,8 +416,7 @@ void memoryDump() {
 			printf("\n");
 
 	}
-
-	*/
+*/
 
 	return;
 }
@@ -1178,6 +1199,45 @@ void callAppropriateFunction(){
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD
  ******************************************************************/
 
+// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is equal to content of register y then stores the array L content into program counter register 
+void JEQ(int x, int y, bool *L){ //Jump if equal 
+	
+	sub(0,x,y);
+	unsigned int n = convertBinaryTodecimal(R0,32);
+	if(n == 0){
+		for(int i=0; i<32; i++{
+			programCounterRegister[i] = L[i];
+		} 
+	}
+}
+
+// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is less than the content of register y then stores the array L content into program counter register 	
+void JIL(int x, int y, bool *L){ //Jump if less than
+	
+	sub(0,y,x);
+	unsigned int n = convertBinaryTodecimal(R0,32);
+	if((n > 0) && (overflowFlag==0)){
+		for(int i=0; i<32; i++{
+			programCounterRegister[i] = L[i];
+		} 
+	}	
+}
+
+// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is greater than the content of register y then stores the array L content into program counter register 
+void JIG(int x, int y, bool *L){ //Jump if greater than
+
+	sub(0,x,y);
+	unsigned int n = convertBinaryTodecimal(R0,32);
+	if((n > 0) && (overflowFlag==0)){
+		for(int i=0; i<32; i++{
+			programCounterRegister[i] = L[i];
+		} 
+	}
+}
+
 // Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register
 void mov(int z, int x, int y){
 	bool tempR1[32], tempR2[32], tempA[32];
@@ -1196,10 +1256,14 @@ void mov(int z, int x, int y){
 // Modular function - Takes three register numbers as input (z,x,y) and take Modulos between 'x' register and 'y' register and stores the result in 'z' register
 void mod(int z, int x, int y){
 
-	int i=32, rim, q=0, divisor, dividend;
+	int i=32, rim, q=0;
+	unsigned int divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
 
+//	Initializing the flags
+	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
+	
 //	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
 //	funtion to decide which register is deffined by y
@@ -1225,6 +1289,8 @@ void mod(int z, int x, int y){
 	}
 
 //	Division loop
+	printf("\nIn the MOD function, the dividend = %u and divisor = %u\n",dividend,divisor);
+
 	carry=0; temp1=0; temp2=0; sum=0;
 	while(dividend >= divisor){
 
@@ -1253,16 +1319,23 @@ void mod(int z, int x, int y){
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(dividend == 0) {zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;}
+	if(dividend == 0) {
+		printf("\nThere is a zeroFlag after MOD operation !!!\n");
+		zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;
+	}
 
 }
 
 // Divition function - Takes three register numbers as input (z,x,y) and divides 'x' register and 'y' register and stores the result in 'z' register
 void div(int z, int x, int y){
 
-	int i=32, rim, q=0, divisor, dividend;
+	int i=32, rim, q=0; 
+	unsigned int divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
+	
+//	Initializing the flags
+	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
 //	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
@@ -1289,9 +1362,10 @@ void div(int z, int x, int y){
 	}
 
 //	Division loop
-	carry=0; temp1=0; temp2=0; sum=0;
-	while(dividend >= divisor){
+	printf("\nIn the DIV function, the dividend = %u and divisor = %u\n",dividend,divisor);
 
+	for(carry=0, temp1=0, temp2=0, sum=0; dividend >= divisor; dividend = convertBinaryTodecimal(tempA2,32)) {
+		printf("\nIn DIV loop");
 		carry=0; temp1=0; temp2=0; sum=0;
 		for(int i=31; i>=0; i--){
 			sum = (tempR1[i] ^ tempA1[i]) ^ carry;
@@ -1307,16 +1381,19 @@ void div(int z, int x, int y){
 			tempR1[k]=tempA2[k];
 		}
 
-		dividend = 	convertBinaryTodecimal(tempA2,32);
-
 	}
+	
+	printf("\nAfter the DIV, the q = %d\n", q);
 
 	convertDecimalToBinary(q,finalResult);
 // function to decide which register is deffined by z
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(q == 0) {zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;}
+	if(q == 0) {
+		printf("\nThere is a zeroFlag after DIV operation !!!\n");
+		zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;
+	}
 }
 
 // Multiply function - Takes three register numbers as input (z,x,y) and multiply 'x' register and 'y' register and stores the result in 'z' register
@@ -1325,17 +1402,20 @@ void mul(int z, int x, int y){
 	int i;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempR11[64], tempR22[64], tempA[32], tempAA[64];
+	
+//	Initializing the flags
+	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
 //	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
 
-	int n = convertBinaryTodecimal(tempR2,32);
+	unsigned int n = convertBinaryTodecimal(tempR2,32);
 
 //	Debugging
-	int n1 = convertBinaryTodecimal(tempR1, 32);
-	int n2 = convertBinaryTodecimal(tempR2, 32);
+	unsigned int n1 = convertBinaryTodecimal(tempR1, 32);
+	unsigned int n2 = convertBinaryTodecimal(tempR2, 32);
 
 //	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplicxation
 	for(int i=0; i<64; i++){
@@ -1355,7 +1435,10 @@ void mul(int z, int x, int y){
 		tempAA[i]=tempR11[i];
 	}
 //	Multiplication logic
-	for(int j=1; j<n; j++){
+
+	printf("\nIn the MUL function, the temmR1 = %u and tempR2 = %u\n",n1,n2);
+	
+	for(unsigned int j=1; j<n; j++){
 		i = 64;
 		while(i>=0){
 			sum = (tempR11[i]^tempAA[i]) ^ carry;
@@ -1371,12 +1454,30 @@ void mul(int z, int x, int y){
 	for(int i=0; i<32; i++){
 		temp[i]=tempAA[i+32];
 	}
+
+// Handelling the situation if one of the input or both the input is zero 	
+	if(n1 == 0 || n2 == 0){
+		for( int i=0; i<32; i++){
+			temp[i] = 0;
+		}
+	}
+	
+	printf("\nAfter the MUL, the result = %u\n", convertBinaryTodecimal(temp, 32));
 // function to decide which register is deffined by z
 	findDestinationRegister(z, temp);
 
 // flag updateing
-	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; printf("There is a overflow after MUL operation !!!");break;} }
-	if(convertBinaryTodecimal(temp,32) == 0){ zeroFlag = 1;}
+	for(int i=0; i<32; i++) {
+		if(tempAA[i] == 1){ 
+			overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; 
+			printf("\nThere is a overflow after MUL operation !!!\n");
+			break;
+		} 
+	}
+	if(convertBinaryTodecimal(temp,32) == 0) {
+		printf("\nThere is a zeroFlag after MUL operation !!!\n"); 
+		zeroFlag = 1; overflowFlag = 0; carryFlag = 0; signFlag = 0;
+	}
 }
 
 // Addition function - Takes three register numbers as input (z,x,y) and addition 'x' register and 'y' register and stores the result in 'z' register
@@ -1385,6 +1486,9 @@ void add(int z, int x, int y) {
 	int i = 31;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32];
+	
+//	Initializing the flags
+	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
 //	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
@@ -1405,7 +1509,10 @@ void add(int z, int x, int y) {
 	findDestinationRegister(z, tempA);
 
 // flag updateing
-	if(carry == 1){carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; printf("There is a overflow and carry after ADD operation !!!");}
+	if(carry == 1){
+		carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; 
+		printf("\nThere is a overflow and carry after ADD operation !!!\n");
+	}
 }
 
 // Substract function - Takes three register numbers as input (z,x,y) and substract 'x' register and 'y' register and stores the result in 'z' register
@@ -1414,6 +1521,9 @@ void sub(int z, int x, int y){
 	int i = 31;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
+	
+//	Initializing the flags
+	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
 //	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
@@ -1450,9 +1560,11 @@ void sub(int z, int x, int y){
 // flag updateing
 	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
 		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
-		printf("There is a overflow after SUB operation !!!");
+		printf("\nThere is a overflow and signFlag after SUB operation !!!\n");
 	}
-	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { zeroFlag = 1; signFlag = 0; overflowFlag = 1; carryFlag = 0;}
+	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { 
+		zeroFlag = 1; signFlag = 0; overflowFlag = 0; carryFlag = 0;
+	}
 
 }
 
