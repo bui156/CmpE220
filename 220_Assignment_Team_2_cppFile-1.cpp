@@ -72,7 +72,7 @@ bool JGE_Opcode [8] = {1,0,0,0,1,0,1,0}; //138
 bool JLE_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
 bool JNE_Opcode [8] = {1,0,0,0,1,1,0,0}; //140
 bool JEQ_Opcode [8] = {1,0,0,0,1,1,0,1}; //141
-bool DMP_Opcode [8[ = {1,0,0,0,1,1,1,0}; //142
+bool DMP_Opcode [8] = {1,0,0,0,1,1,1,0}; //142
 */
 
 
@@ -1114,6 +1114,14 @@ void decodeALUInstructionOperands(){
 			operand1R14Count++;
 		if (operand1[i]==tmpR15_Opcode[i])
 			operand1R15Count++;
+	/*
+		if (operand1[i]==tmpL1_Opcode[i])
+			operand1L1Count++;
+		if (operand1[i]==tmpL2_Opcode[i])
+			operand1L2Count++;
+		if (operand1[i]==tmpL3_Opcode[i])
+			operand1L3Count++;
+	 */
 
 		if (operand2[i]==tmpR0_Opcode[i])
 			operand2R0Count++;
@@ -1180,6 +1188,14 @@ void decodeALUInstructionOperands(){
 			operand3R14Count++;
 		if (operand3[i]==tmpR15_Opcode[i])
 			operand3R15Count++;
+	/*
+	  	if (operand3[i]==tmpL1_Opcode[i])
+	  		operand3L1Count++;
+	  	if (operand3[i]==tmpL2_Opcode[i])
+	  		operand3L2Count++;
+	  	if (operand3[i]==tmpL3_Opcode[i])
+	  		operand3L3Count++;
+	 */
 	}
 
 	if (addCount==8)
