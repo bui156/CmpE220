@@ -8,6 +8,7 @@
 # include <unistd.h>
 # include <iostream>
 # include <fstream>
+# include <cstdlib>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ using namespace std;
 //Defining the parts of processor
 bool memory [4096][8];
 bool flags [8];
+bool signFlag=0, overflowFlag=0, zeroFlag=0, carryFlag=0;
 bool validAddressFlag = 1;
 bool accumulator [32] = {1,1,1,1,1,1,1,1,
 		                 0,0,0,0,0,0,0,1,
@@ -28,6 +30,7 @@ bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 									0,0,0,0,0,1,0,0,
 									0,0,0,0,0,0,0,0};
 int startMemLocation = 1024;
+int operationType = 0;
 
 //Opcodes for Registers
 char tmpExit_Opcode [8] = {'1','0','1','0','1','0','1','0'};
@@ -48,7 +51,11 @@ bool R12_Opcode [8] = {0,0,0,0,1,1,0,1}; //13
 bool R13_Opcode [8] = {0,0,0,0,1,1,1,0}; //14
 bool R14_Opcode [8] = {0,0,0,0,1,1,1,1}; //15
 bool R15_Opcode [8] = {0,0,0,1,0,0,0,0}; //16
-
+/*
+bool L1_Opcode [8] = {0,0,0,1,0,0,0,1};	//17
+bool L2_Opcode [8] = {0,0,0,1,0,0,1,0};	//18
+bool L3_Opcode [8] = {0,0,0,1,0,0,1,1};	//19
+*/
 //Opcodes for ALU Operations
 bool ADD_Opcode [8] = {1,0,0,0,0,0,0,0}; //128
 bool SUB_Opcode [8] = {1,0,0,0,0,0,0,1}; //129
@@ -58,6 +65,16 @@ bool MOD_Opcode [8] = {1,0,0,0,0,1,0,0}; //132
 bool LDA_Opcode [8] = {1,0,0,0,0,1,0,1}; //133
 bool STA_Opcode [8] = {1,0,0,0,0,1,1,0}; //134
 bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
+/*
+bool MVI_Opcode [8] = {1,0,0,0,1,0,0,0}; //136
+bool JMP_Opcode [8] = {1,0,0,0,1,0,0,1}; //137
+bool JGE_Opcode [8] = {1,0,0,0,1,0,1,0}; //138
+bool JLE_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
+bool JNE_Opcode [8] = {1,0,0,0,1,1,0,0}; //140
+bool JEQ_Opcode [8] = {1,0,0,0,1,1,0,1}; //141
+bool DMP_Opcode [8[ = {1,0,0,0,1,1,1,0}; //142
+*/
+
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
@@ -76,7 +93,7 @@ bool R3 [32] = {0,0,0,0,0,0,0,0,
 bool R4 [32] = {0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,1}; //4
+				0,0,0,0,0,1,0,0}; //4
 bool R5 [32];
 bool R6 [32];
 bool R7 [32];
@@ -110,20 +127,36 @@ void STA(int); //This function will copy the contents of accumulator into 4 cons
 void validDataMemoryAddressCheck(int memoryLocation);
 void memoryDump();
 void readFromFile(string fileName);
-void decodeInstructionFromFile(string textLine);
 void instructionIntoMemory(char* token,int memLocation);
+////////////////////////////////////////////////
 void parseInstructionFromMemory();
 void getCurrentInstruction();
-void decodeInstructionOperationOperand();
+void decodeALUInstructionOperands();
 void callAppropriateFunction();
-void add(int z, int x, int y);
-void sub(int z, int x, int y);
-void mul(int z, int x, int y);
-void div(int z, int x, int y);
+//void add(int z, int x, int y);
+//void sub(int z, int x, int y);
+//void mul(int z, int x, int y);
+//void div(int z, int x, int y);
+//void findSourceRegister(int x, bool *tempR1);
+//void findDestinationRegister(int x, bool *tempR2);
+//int convertBinaryTodecimal(bool *bits, int);
+//void convertDecimalToBinary(int dec, bool *result);
+int MemoryAddressing(int imm, int rdx, int rcx, int S);
+int StringMemoryAddressing(string str);
+int StringRegistersToInt(string strNew);
+
+// Function declaration for ALU operation
 void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
 int convertBinaryTodecimal(bool *bits, int);
 void convertDecimalToBinary(int dec, bool *result);
+void add(int z, int x, int y);
+void sub(int z, int x, int y);
+void mul(int z, int x, int y);
+void div(int z, int x, int y);
+void mod(int z, int x, int y);
+void mov(int z, int x, int y);
+
 
 int main(){
 
@@ -142,10 +175,18 @@ int main(){
 	cout<<"Starting Program"<<endl;
 	startMemLocation=1024;
 	while (exitCodeCount != 8){
+		operationType = 0;
 		getCurrentInstruction();
 		parseInstructionFromMemory();
 		if (exitCodeCount != 8){
-			decodeInstructionOperationOperand();
+			if (operationType == 1)//ALU Type Instruction: Operation, Operand1, Operand2, Operand3
+				decodeALUInstructionOperands();
+			else if (operationType == 2) //MVI Instruction
+				;
+			else if (operationType == 3) //JMP Instruction
+				;
+			else if (operationType == 4) //DMP Instruction
+				;
 			callAppropriateFunction();
 		}
 	}
@@ -202,11 +243,16 @@ void memoryDump() {
 
 	int i = 0;
 
+	/*
 	printf("\n Flag Register: ");
 
 	for(int j=0;j<8;j++){
 		printf("%d",flags[j]);
 	}
+	*/
+
+	printf("\n Flags: \n overflowFlag = %d, signFlag = %d, zeroFlag = %d, carryFlag = %d \n",
+			overflowFlag, signFlag, zeroFlag, carryFlag);
 
 	printf("\n\nSpecial Purpose registers: ");
 	printf("\n Accumulator Register: ");
@@ -355,7 +401,9 @@ void memoryDump() {
 	cout<<endl<<endl;
 	printf("Memory: HEX: DEC\n");
 
-	for(int i = 1024; i<=2055; i++) {
+	//for(int i = 1024; i<=2055; i++) {
+	//for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
+	for (int i = 1024; i <=1104; i++) {
 		printf(" Memory Location: %X: ",i);
 		char vOut[9];
 		for(int j=0;j<8;j++){
@@ -406,13 +454,40 @@ void decodeInstructionFromFile(string textLine){
 
 	pch = strtok((char*)textLine.c_str()," ,\r");
 
-	while (pch != NULL){
-		instructionIntoMemory(pch,startMemLocation);
-		startMemLocation++;
-		pch = strtok (NULL, " ,\r");
+	while (pch != NULL)
+	{
+		if(strcmp(pch,"MFA")==0){
+			cout<<"IN MFA"<<endl;
+			pch = strtok (NULL, " ");
+			//Call Nishants Function with pch
+			int memaddr = StringMemoryAddressing(pch);
+			cout << "MemoryAddressing = " << memaddr << endl;
+			cout<<"THE PCH TO PASS: "<<pch<<endl;
+			//mov from MemoryAddressing to Accumulator
+			STA(memaddr);
+			cout << "updated accumulator" << endl;
+			pch = strtok (NULL, " ,\r");
+		}else
+			if(strcmp(pch,"MTA")==0){
+				cout<<"IN MTA"<<endl;
+				pch = strtok (NULL, " ");
+				//Call Nishants Function with pch
+				int memaddr = StringMemoryAddressing(pch);
+				cout << "MemoryAddressing = " << memaddr << endl;
+				cout<<"THE PCH TO PASS: "<<pch<<endl;
+				//mov from Accumulator to MemoryAddressing
+				LDA(memaddr);
+				cout << "updated MemoryAddress" << endl;
+				pch = strtok (NULL, " ,\r");
+			}else{
+				cout<<"IN ELSE"<<endl;
+				instructionIntoMemory(pch,startMemLocation);
+				startMemLocation++;
+				pch = strtok (NULL, " ,\r");
+			}
 	}
 
-	return;
+	return ;
 }
 
 //Converts operand into bits and stores into memory.
@@ -444,6 +519,18 @@ void instructionIntoMemory(char* token,int memLocation) {
 						memory[memLocation][i] = DIV_Opcode[i];
 					}
 				}else
+					if(strcmp(token,"MOD")==0){
+						cout<<"IN MOD"<<endl;
+						for (int i = 0; i < 8; i++){
+							memory[memLocation][i] = MOD_Opcode[i];
+						}
+					}else
+						if(strcmp(token,"MOV")==0){
+							cout<<"IN MOV"<<endl;
+							for (int i = 0; i < 8; i++){
+								memory[memLocation][i] = MOV_Opcode[i];
+							}
+						}else
 					if(strcmp(token,"R0")==0){
 						cout<<"IN R0"<<endl;
 						for (int i = 0; i < 8; i++){
@@ -549,6 +636,138 @@ void instructionIntoMemory(char* token,int memLocation) {
 																						}
 																					}
 }
+/****************************************
+ * MemoryAddressing
+ */
+int MemoryAddressing(int imm=0, int rdx=0, int rcx=0, int S=1){
+	int address;
+	address  = imm + rdx + rcx*S;
+	return address;
+}
+/*************************************************************
+ *
+ *************************************************************/
+int StringMemoryAddressing(string str){
+	unsigned first = 0;
+	unsigned last = str.find('(');
+	string strNew = str.substr (first,last-first);
+	long int int_value1 = std::strtol(strNew.c_str(), 0, 16);
+
+	first = str.find('(');
+	last = str.find(',');
+	strNew = str.substr (first+1,last-first-1);
+	//long int int_value2 = std::strtol(strNew.c_str(), 0, 16);
+	//cout << strNew << endl;
+	int int_value2 = StringRegistersToInt(strNew);
+	//cout << "int_value2=" << int_value2 << endl;
+
+	first = str.find(',',last);
+	last = str.find(',',last+1);
+	strNew = str.substr (first+1,last-first-1);
+	//long int int_value3 = std::strtol(strNew.c_str(), 0, 16);
+	//cout << strNew << endl;
+	int int_value3 = StringRegistersToInt(strNew);
+	//cout << "int_value3=" << int_value3 << endl;
+
+	first = str.find(',',last);
+	last = str.find(')',last+1);
+	strNew = str.substr (first+1,last-first-1);
+	long int int_value4 = std::strtol(strNew.c_str(), 0, 10);
+
+	int addr = MemoryAddressing(int_value1,int_value2,int_value3,int_value4);
+	return addr;
+	//return 0;
+}
+/*************************************************************
+ *
+ *************************************************************/
+int StringRegistersToInt(string strNew){
+	char vOut[33];
+	if(strcmp(strNew.c_str(),"R0")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R0[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R1")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R1[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R2")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R2[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R3")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R3[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R4")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R4[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R5")==0){
+		for(int i = 0; i < 32; i++){
+			vOut[i] = R5[i] ? '1' : '0';
+		}
+	}
+	if(strcmp(strNew.c_str(),"R6")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R6[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R7")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R7[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R8")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R8[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R9")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R9[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R10")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R10[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R11")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R11[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R12")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R12[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R13")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R13[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R14")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R14[i] ? '1' : '0';
+			}
+		}
+	if(strcmp(strNew.c_str(),"R15")==0){
+			for(int i = 0; i < 32; i++){
+				vOut[i] = R15[i] ? '1' : '0';
+			}
+		}
+
+	int ret = strtol(vOut, NULL, 2);
+	return ret;
+}
+
 /*************************************************************/
 // This function reads an byte of memory and decodes it into
 // its appropriate instruction/operand.
@@ -559,6 +778,112 @@ void instructionIntoMemory(char* token,int memLocation) {
 /*************************************************************/
 void parseInstructionFromMemory(){
 	//Start of Instruction Memory is 1024 --> startMemLocation
+	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
+		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
+		//mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0, jeqCount = 0, dmpCount = 0;
+
+	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
+		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8];
+		//tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8],
+			//tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
+
+	for (int i = 0; i< 8; i++){
+		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
+		tmpSUB_Opcode[i] = SUB_Opcode[i] ? '1' : '0';
+		tmpMUL_Opcode[i] = MUL_Opcode[i] ? '1' : '0';
+		tmpDIV_Opcode[i] = DIV_Opcode[i] ? '1' : '0';
+		tmpMOD_Opcode[i] = MOD_Opcode[i] ? '1' : '0';
+		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
+		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
+		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
+		/*
+		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
+		tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
+		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
+		 */
+	}
+
+	//read in opcode
+	for (int i = 0; i < 8; i++) {
+		operation[i] = currentInstruction[i];
+	}
+
+	//"decode" opcode. Compare with function opcodes.
+	for (int i = 0; i < 8; i++) {
+		if (operation[i]==tmpADD_Opcode[i])
+			addCount++;
+		if (operation[i]==tmpSUB_Opcode[i])
+			subCount++;
+		if (operation[i]==tmpMUL_Opcode[i])
+			mulCount++;
+		if (operation[i]==tmpDIV_Opcode[i])
+			divCount++;
+		if (operation[i]==tmpMOD_Opcode[i])
+			modCount++;
+		if (operation[i]==tmpLDA_Opcode[i])
+			ldaCount++;
+		if (operation[i]==tmpSTA_Opcode[i])
+			staCount++;
+		if (operation[i]==tmpMOV_Opcode[i])
+			movCount++;
+		/*
+		if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+		if (operation[i]==tmpJGE_Opcode[i])
+			jgeCount++;
+		if (operation[i]==tmpJLE_Opcode[i])
+			jleCount++;
+		if (operation[i]==tmpJNE_Opcode[i])
+			jneCount++;
+		if (operation[i]==tmpJEQ_Opcode[i])
+			jeqCount++;
+		if (operation[i]==tmpDMP_Opcode[i])
+			dmpCount++;
+		*/
+	}
+
+	//if ALU instruction = Operation, Operand1, Operand2, Operand3
+	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 || modCount==8 || ldaCount==8 ||
+			staCount==8 || movCount==8) { //jgeCount==8 || jleCount==8 || jneCount==8 || jeqCount==8
+		operationType = 1; //Set to ALU Type Instruction
+		for (int i = 8; i < 32; i++) {
+			if (i >= 8 && i <= 15)
+				operand1[i-8] = currentInstruction[i];
+			if (i >= 16 && i <= 23)
+				operand2[i-16] = currentInstruction[i];
+			if (i >= 24 && i <= 31)
+				operand3[i-24] = currentInstruction[i];
+		}
+	}
+	/*
+	//MVI Instruction = Operation, Operand1, Operand2 (16-bit?)
+	else if (mviCount==8){
+		operationType = 2;
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i]; //Operand1 will have destination Register
+		}
+
+	}
+	//JMP Instruction = Operation, Operand1 (L1,L2,L3)
+	else if (jmpCount==8){
+		operationType = 3;
+		//Decode operand 1 to L1, L2, L3
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i]; //Operand1 will have L1, L2, L3
+		}
+		//startMemLocation = L1,L2,L3
+	}
+	//DMP Instruction = Operation
+	else if (dmpCount==8){
+		operationType = 4;
+	}
+	*/
 
 	//first 8 bits are always opcode
 	//next 24 bits are always registers
@@ -654,9 +979,12 @@ void getCurrentInstruction(){
  * This function changes the operation/opcode
  * into an integer value.
  *******************************************/
-void decodeInstructionOperationOperand(){
+void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
+	/*
+	 *  mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0, jeqCount=0, dmpCount=0;
+	 */
 
 	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
 		operand1R4Count = 0, operand1R5Count = 0, operand1R6Count = 0, operand1R7Count = 0,
@@ -679,6 +1007,10 @@ void decodeInstructionOperationOperand(){
 		 tmpR4_Opcode[8], tmpR5_Opcode[8], tmpR6_Opcode[8], tmpR7_Opcode[8],
 		 tmpR8_Opcode[8], tmpR9_Opcode[8], tmpR10_Opcode[8], tmpR11_Opcode[8],
 		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8];
+	/*
+	 *   tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8],
+	 *   tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
+	 */
 
 	for (int i = 0; i< 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
@@ -689,6 +1021,15 @@ void decodeInstructionOperationOperand(){
 		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
 		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
 		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
+		/*
+		 * tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		 * tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		 * tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
+		 * tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
+		 * tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		 * tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		 * tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
+		 */
 		tmpR0_Opcode[i] = R0_Opcode[i] ? '1' : '0';
 		tmpR1_Opcode[i] = R1_Opcode[i] ? '1' : '0';
 		tmpR2_Opcode[i] = R2_Opcode[i] ? '1' : '0';
@@ -724,6 +1065,22 @@ void decodeInstructionOperationOperand(){
 			staCount++;
 		if (operation[i]==tmpMOV_Opcode[i])
 			movCount++;
+	/*
+	 *  if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+		if (operation[i]==tmpJGE_Opcode[i])
+			jgeCount++;
+		if (operation[i]==tmpJLE_Opcode[i])
+			jleCount++;
+		if (operation[i]==tmpJNE_Opcode[i])
+			jneCount++;
+		if (operation[i]==tmpJEQ_Opcode[i])
+			jeqCount++;
+		if (operation[i]==tmpDMP_Opcode[i])
+			dmpCount++;
+	 */
 
 		if (operand1[i]==tmpR0_Opcode[i])
 			operand1R0Count++;
@@ -841,6 +1198,22 @@ void decodeInstructionOperationOperand(){
 		instructionOperation=134;
 	else if (movCount==8)
 		instructionOperation=135;
+	/*
+	else if (mviCount==8)
+		instructionOperation=136;
+	else if (jmpCount==8)
+		instructionOperation=137;
+	else if (jgeCount==8)
+		instructionOperation=138;
+	else if (jleCount==8)
+		instructionOperation=139;
+	else if (jneCount==8)
+		instructionOperation=140;
+	else if (jeqCount==8)
+		instructionOperation=141;
+	else if (dmpCount==8)
+		instructionOperation=142;
+	 */
 
 	if (operand1R0Count==8)
 		instructionOperand1=0;
@@ -943,6 +1316,7 @@ void decodeInstructionOperationOperand(){
 
 	return;
 }
+
 /*******************************************
  This function decodes operations and  calls
  the appropriate function.
@@ -958,110 +1332,190 @@ void callAppropriateFunction(){
 		mul(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==131)
 		div(instructionOperand1, instructionOperand2, instructionOperand3);
-/*
 	else if (instructionOperation==132)
 		mod(instructionOperand1, instructionOperand2, instructionOperand3);
+	/*
 	else if (instructionOperation==133)
 		lda();
 	else if (instructionOperation==134)
 		sta();
+	*/
 	else if (instructionOperation==135)
-		mov();
-*/
+		mov(instructionOperand1, instructionOperand2, instructionOperand3);
+	/*
+	else if (instructionOperation==136)
+		mvi(instructionOperand1,);
+	else if (instructionOperation==137)
+		jmp(instructionOperand1);
+	else if (instructionOperation==138)
+		jge(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==139)
+		jle(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==140)
+		jne(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==141)
+		jeq(instrucitonOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==142)
+		dmp();
+	 */
 	return;
 }
-void add(int z, int x, int y) {
 
-	int i = 31;
-	bool carry=0, temp1=0, temp2=0, sum=0;
+/******************************************************************
+ Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD
+ ******************************************************************/
+
+// Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register
+void mov(int z, int x, int y){
 	bool tempR1[32], tempR2[32], tempA[32];
-
-//	function to decide which register is defined by x
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
 
-//	function to decide which register is defined by y
-	findSourceRegister(y,tempR2);
-
-	while(i>=0){
-		sum = (tempR1[i]^tempR2[i]) ^ carry;
-		temp1 = tempR1[i] & tempR2[i];
-		temp2 = (tempR1[i]^tempR2[i]) & carry;
-		carry = temp1 | temp2;
-		tempA[i] = sum;
-		i--;
-	}
-
-// function to decide which register is defined by z
-	findDestinationRegister(z, tempA);
-/*
-	printf("Addition: \n");
 	for(int i=0; i<32; i++){
-		printf("%d", R4[i]);
+		tempR2[i] = tempR1[i];
 	}
-	printf("\n");
 
-	for(int i=0; i<32; i++){
-		printf("%d", R3[i]);
-	}
-	printf("  +\n--------------------------------\n");
-
-	for(int i=0; i<32; i++){
-		printf("%d", R1[i]);
-	}
-	printf("\n");
-*/
+//function to decide which register is deffined by z
+	findDestinationRegister(z, tempR2);
 
 }
-void sub(int z, int x, int y){
 
-	int i = 31;
+// Modular function - Takes three register numbers as input (z,x,y) and take Modulos between 'x' register and 'y' register and stores the result in 'z' register
+void mod(int z, int x, int y){
+
+	int i=32, rim, q=0, divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
-	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
+	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
 
-//	function to decide which register is defined by x
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
-//	function to decide which register is defined by y
+//	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
 
+	dividend = convertBinaryTodecimal(tempR1,32);
+	int n = dividend;
+	divisor = convertBinaryTodecimal(tempR2,32);
+	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+
+//	Calculating 2's compliment
 	for(int i=0; i<32; i++){
 		tempRX[i] = !tempR2[i];
 	}
 
-	while(i>=0){
-		sum = (tempRX[i]^tempRY[i]) ^ carry;
+	for(int i=31; i>=0; i--){
+		sum = (tempRX[i] ^ tempRY[i]) ^ carry;
 		temp1 = tempRX[i] & tempRY[i];
 		temp2 = (tempRX[i] ^ tempRY[i]) & carry;
 		carry = temp1 | temp2;
 		tempA1[i] = sum;
-		i--;
 	}
 
-	i = 31;
+//	Division loop
+	carry=0; temp1=0; temp2=0; sum=0;
+	while(dividend >= divisor){
 
-	while(i>=0){
-		sum = (tempA1[i] ^ tempR1[i]) ^ carry;
-		temp1 = tempA1[i] & tempR1[i];
-		temp2 = (tempA1[i] ^ tempR1[i]) & carry;
-		carry = temp1 | temp2;
-		tempA2[i] = sum;
-		i--;
+		carry=0; temp1=0; temp2=0; sum=0;
+		for(int i=31; i>=0; i--){
+			sum = (tempR1[i] ^ tempA1[i]) ^ carry;
+			temp1 = tempR1[i] & tempA1[i];
+			temp2 = (tempR1[i] ^ tempA1[i]) & carry;
+			carry = temp1 | temp2;
+			tempA2[i] = sum;
+		}
+
+		q++;
+
+		for(int k=0; k<32; k++){
+			tempR1[k]=tempA2[k];
+		}
+
+		dividend = 	convertBinaryTodecimal(tempA2,32);
+
 	}
 
-// function to decide which register is defined by z
-	findDestinationRegister(z, tempA2);
+	convertDecimalToBinary(dividend,finalResult);
+
+//	function to decide which register is deffined by z
+	findDestinationRegister(z, finalResult);
+
+//	Updating flags
+	if(dividend == 0) {zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;}
 
 }
 
+// Divition function - Takes three register numbers as input (z,x,y) and divides 'x' register and 'y' register and stores the result in 'z' register
+void div(int z, int x, int y){
+
+	int i=32, rim, q=0, divisor, dividend;
+	bool carry=0, temp1=0, temp2=0, sum=0;
+	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
+
+//	function to decide which register is deffined by x
+	findSourceRegister(x,tempR1);
+//	funtion to decide which register is deffined by y
+	findSourceRegister(y,tempR2);
+
+	dividend = convertBinaryTodecimal(tempR1,32);
+	int n = dividend;
+	divisor = convertBinaryTodecimal(tempR2,32);
+	int m = divisor;
+	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+
+//	Calculating 2's compliment
+	for(int i=0; i<32; i++){
+		tempRX[i] = !tempR2[i];
+	}
+
+	for(int i=31; i>=0; i--){
+		sum = (tempRX[i] ^ tempRY[i]) ^ carry;
+		temp1 = tempRX[i] & tempRY[i];
+		temp2 = (tempRX[i] ^ tempRY[i]) & carry;
+		carry = temp1 | temp2;
+		tempA1[i] = sum;
+	}
+
+//	Division loop
+	carry=0; temp1=0; temp2=0; sum=0;
+	while(dividend >= divisor){
+
+		carry=0; temp1=0; temp2=0; sum=0;
+		for(int i=31; i>=0; i--){
+			sum = (tempR1[i] ^ tempA1[i]) ^ carry;
+			temp1 = tempR1[i] & tempA1[i];
+			temp2 = (tempR1[i] ^ tempA1[i]) & carry;
+			carry = temp1 | temp2;
+			tempA2[i] = sum;
+		}
+
+		q++;
+
+		for(int k=0; k<32; k++){
+			tempR1[k]=tempA2[k];
+		}
+
+		dividend = 	convertBinaryTodecimal(tempA2,32);
+
+	}
+
+	convertDecimalToBinary(q,finalResult);
+// function to decide which register is deffined by z
+	findDestinationRegister(z, finalResult);
+
+//	Updating flags
+	if(q == 0) {zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;}
+}
+
+// Multiply function - Takes three register numbers as input (z,x,y) and multiply 'x' register and 'y' register and stores the result in 'z' register
 void mul(int z, int x, int y){
 
 	int i;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempR11[64], tempR22[64], tempA[32], tempAA[64];
 
-//	function to decide which register is defined by x
+//	function to decide which register is deffined by x
 	findSourceRegister(x,tempR1);
-//	function to decide which register is defined by y
+//	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
 
 	int n = convertBinaryTodecimal(tempR2,32);
@@ -1070,7 +1524,7 @@ void mul(int z, int x, int y){
 	int n1 = convertBinaryTodecimal(tempR1, 32);
 	int n2 = convertBinaryTodecimal(tempR2, 32);
 
-//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplication
+//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplicxation
 	for(int i=0; i<64; i++){
 
 		if(i<=31){
@@ -1083,7 +1537,7 @@ void mul(int z, int x, int y){
 		}
 	}
 
-//	Initializing tempAA with tempR11
+//	Initialinzing tempAA with tempR11
 	for(int i=0; i<64; i++){
 		tempAA[i]=tempR11[i];
 	}
@@ -1104,49 +1558,125 @@ void mul(int z, int x, int y){
 	for(int i=0; i<32; i++){
 		temp[i]=tempAA[i+32];
 	}
-// function to decide which register is defined by z
+// function to decide which register is deffined by z
 	findDestinationRegister(z, temp);
 
-// Debugging
-
-	unsigned int n3 = convertBinaryTodecimal(tempAA, 64);
-	unsigned int n4 = convertBinaryTodecimal(tempR11, 64);
-	unsigned int n5 = convertBinaryTodecimal(tempR22, 64);
-	printf("\n%d * %d = %d\n", n1,n,n3);
-	printf("\n%d * %d = %d\n", n4,n5,n3);
+// flag updateing
+	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; printf("There is a overflow after MUL operation !!!");break;} }
+	if(convertBinaryTodecimal(temp,32) == 0){ zeroFlag = 1;}
 }
 
-/***************************************************
- * Divide Function
- ***************************************************/
+// Addition function - Takes three register numbers as input (z,x,y) and addition 'x' register and 'y' register and stores the result in 'z' register
+void add(int z, int x, int y) {
 
-/***************************************************
- * Modulus Function
- ***************************************************/
+	int i = 31;
+	bool carry=0, temp1=0, temp2=0, sum=0;
+	bool tempR1[32], tempR2[32], tempA[32];
 
-/**
- * Converts hexadecimal input to binary
- */
+//	function to decide which register is deffined by x
+	findSourceRegister(x,tempR1);
+
+//	funtion to decide which register is deffined by y
+	findSourceRegister(y,tempR2);
+
+	while(i>=0){
+		sum = (tempR1[i]^tempR2[i]) ^ carry;
+		temp1 = tempR1[i] & tempR2[i];
+		temp2 = (tempR1[i]^tempR2[i]) & carry;
+		carry = temp1 | temp2;
+		tempA[i] = sum;
+		i--;
+	}
+
+// function to decide which register is deffined by z
+	findDestinationRegister(z, tempA);
+
+// flag updateing
+	if(carry == 1){carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; printf("There is a overflow and carry after ADD operation !!!");}
+}
+
+// Substract function - Takes three register numbers as input (z,x,y) and substract 'x' register and 'y' register and stores the result in 'z' register
+void sub(int z, int x, int y){
+
+	int i = 31;
+	bool carry=0, temp1=0, temp2=0, sum=0;
+	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
+
+//	function to decide which register is deffined by x
+	findSourceRegister(x,tempR1);
+//	funtion to decide which register is deffined by y
+	findSourceRegister(y,tempR2);
+
+	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+	for(int i=0; i<32; i++){
+		tempRX[i] = !tempR2[i];
+	}
+
+	while(i>=0){
+		sum = (tempRX[i]^tempRY[i]) ^ carry;
+		temp1 = tempRX[i] & tempRY[i];
+		temp2 = (tempRX[i] ^ tempRY[i]) & carry;
+		carry = temp1 | temp2;
+		tempA1[i] = sum;
+		i--;
+	}
+
+	i = 31;
+	while(i>=0){
+		sum = (tempA1[i] ^ tempR1[i]) ^ carry;
+		temp1 = tempA1[i] & tempR1[i];
+		temp2 = (tempA1[i] ^ tempR1[i]) & carry;
+		carry = temp1 | temp2;
+		tempA2[i] = sum;
+		i--;
+	}
+
+// function to decide which register is deffined by z
+	findDestinationRegister(z, tempA2);
+
+// flag updateing
+	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
+		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
+		printf("There is a overflow after SUB operation !!!");
+	}
+	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { zeroFlag = 1; signFlag = 0; overflowFlag = 1; carryFlag = 0;}
+
+}
+
+/******************************************************************
+ Supporting functions for ALU Operation
+ ******************************************************************/
+
+// Converts hexadecimal input to binary
+
 void convertDecimalToBinary(int dec, bool *result){
 
-	bool bit;
+	bool bit; bool temp[32];
+
 	for(int i=0; i<32; i++){
 		result[i] = 0;
+		temp[i] = 0;
 	}
 
 	int x=dec, count=0;
 	while(x != 0) {
-		bit = bool(x%2);
-		result[count]=bit;
+		if(bool(x%2) == 1)
+			temp[count] = 1;
+		else
+			temp[count] = 0;
 		count++;
 		x=x/2;
 	}
+
+	for(int i=0, j=31; i<32; i++,j--){
+		result[j]=temp[i];
+	}
+
 }
 
 
-/**
- * Converts binary input to decimal
- */
+// Converts dinary input to decimal
+
 int convertBinaryTodecimal(bool *bits, int loc){
 
 	int counter = 0;
@@ -1164,14 +1694,15 @@ int convertBinaryTodecimal(bool *bits, int loc){
 	return decimal;
 }
 
+
 void findSourceRegister(int x, bool *tempR1){
 
-//	Switch case to decide which register is defined by x
+//	Switch case to deside which register is deffined by x
 	switch(x){
 
 		case 0:
 			for(int i=0; i<32; i++){
-				tempR1[i] = A[i];
+				tempR1[i] = R0[i];
 			}
 			break;
 
@@ -1273,87 +1804,105 @@ void findSourceRegister(int x, bool *tempR1){
 
 void findDestinationRegister(int z, bool *tempA){
 
+//	Switch case to deside which register is deffined by z
 	switch(z){
+
 		case 0:
 			for(int i=0; i<32; i++){
-				A[i] = tempA[i];
+				R0[i] = tempA[i];
 			}
 			break;
+
 		case 1:
 			for(int i=0; i<32; i++){
 				R1[i] = tempA[i];
 			}
 			break;
+
 		case 2:
 			for(int i=0; i<32; i++){
 				R2[i] = tempA[i];
 			}
 			break;
+
 		case 3:
 			for(int i=0; i<32; i++){
 				R3[i] = tempA[i];
 			}
 			break;
+
 		case 4:
 			for(int i=0; i<32; i++){
 				R4[i] = tempA[i];
 			}
 			break;
+
 		case 5:
 			for(int i=0; i<32; i++){
 				R5[i] = tempA[i];
 			}
 			break;
+
 		case 6:
 			for(int i=0; i<32; i++){
 				R6[i] = tempA[i];
 			}
 			break;
+
 		case 7:
 			for(int i=0; i<32; i++){
 				R7[i] = tempA[i];
 			}
 			break;
+
 		case 8:
 			for(int i=0; i<32; i++){
 				R8[i] = tempA[i];
 			}
 			break;
+
 		case 9:
 			for(int i=0; i<32; i++){
 				R9[i] = tempA[i];
 			}
 			break;
+
 		case 10:
 			for(int i=0; i<32; i++){
 				R10[i] = tempA[i];
 			}
 			break;
+
 		case 11:
 			for(int i=0; i<32; i++){
 				R11[i] = tempA[i];
 			}
 			break;
+
 		case 12:
 			for(int i=0; i<32; i++){
 				R12[i] = tempA[i];
 			}
 			break;
+
 		case 13:
 			for(int i=0; i<32; i++){
 				R13[i] = tempA[i];
 			}
 			break;
+
 		case 14:
 			for(int i=0; i<32; i++){
 				R14[i] = tempA[i];
 			}
 			break;
+
 		case 15:
 			for(int i=0; i<32; i++){
 				R15[i] = tempA[i];
 			}
 			break;
+
 		default:
 			printf("\nWrong register input !!! \n");
 			break;
