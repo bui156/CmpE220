@@ -70,7 +70,9 @@ bool MVI_Opcode [8] = {1,0,0,0,1,0,0,0}; //136
 bool JMP_Opcode [8] = {1,0,0,0,1,0,0,1}; //137
 bool JGE_Opcode [8] = {1,0,0,0,1,0,1,0}; //138
 bool JLE_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
-bool JNE_Opcode [8] = {1,0,0,0,1,1,0,1}; //140
+bool JNE_Opcode [8] = {1,0,0,0,1,1,0,0}; //140
+bool JEQ_Opcode [8] = {1,0,0,0,1,1,0,1}; //141
+bool DMP_Opcode [8[ = {1,0,0,0,1,1,1,0}; //142
 */
 
 
@@ -179,9 +181,11 @@ int main(){
 		if (exitCodeCount != 8){
 			if (operationType == 1)//ALU Type Instruction: Operation, Operand1, Operand2, Operand3
 				decodeALUInstructionOperands();
-			else if (operationType ==2) //MVI Instruction
+			else if (operationType == 2) //MVI Instruction
 				;
-			else if (operationType ==3) //JMP Instruction
+			else if (operationType == 3) //JMP Instruction
+				;
+			else if (operationType == 4) //DMP Instruction
 				;
 			callAppropriateFunction();
 		}
@@ -776,11 +780,12 @@ void parseInstructionFromMemory(){
 	//Start of Instruction Memory is 1024 --> startMemLocation
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
-		//mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0;
+		//mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0, jeqCount = 0, dmpCount = 0;
 
 	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
 		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8];
-		//tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8];
+		//tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8],
+			//tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
 
 	for (int i = 0; i< 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
@@ -797,6 +802,8 @@ void parseInstructionFromMemory(){
 		tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
 		tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
 		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
 		 */
 	}
 
@@ -834,12 +841,16 @@ void parseInstructionFromMemory(){
 			jleCount++;
 		if (operation[i]==tmpJNE_Opcode[i])
 			jneCount++;
+		if (operation[i]==tmpJEQ_Opcode[i])
+			jeqCount++;
+		if (operation[i]==tmpDMP_Opcode[i])
+			dmpCount++;
 		*/
 	}
 
 	//if ALU instruction = Operation, Operand1, Operand2, Operand3
 	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 || modCount==8 || ldaCount==8 ||
-			staCount==8 || movCount==8) { //jgeCount==8 || jleCount==8 || jneCount==8
+			staCount==8 || movCount==8) { //jgeCount==8 || jleCount==8 || jneCount==8 || jeqCount==8
 		operationType = 1; //Set to ALU Type Instruction
 		for (int i = 8; i < 32; i++) {
 			if (i >= 8 && i <= 15)
@@ -867,6 +878,10 @@ void parseInstructionFromMemory(){
 			operand1[i-8] = currentInstruction[i]; //Operand1 will have L1, L2, L3
 		}
 		//startMemLocation = L1,L2,L3
+	}
+	//DMP Instruction = Operation
+	else if (dmpCount==8){
+		operationType = 4;
 	}
 	*/
 
@@ -968,7 +983,7 @@ void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
 	/*
-	 *  mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0;
+	 *  mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0, jeqCount=0, dmpCount=0;
 	 */
 
 	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
@@ -993,7 +1008,8 @@ void decodeALUInstructionOperands(){
 		 tmpR8_Opcode[8], tmpR9_Opcode[8], tmpR10_Opcode[8], tmpR11_Opcode[8],
 		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8];
 	/*
-	 *   tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8];
+	 *   tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8],
+	 *   tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
 	 */
 
 	for (int i = 0; i< 8; i++){
@@ -1011,6 +1027,8 @@ void decodeALUInstructionOperands(){
 		 * tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
 		 * tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
 		 * tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		 * tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		 * tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
 		 */
 		tmpR0_Opcode[i] = R0_Opcode[i] ? '1' : '0';
 		tmpR1_Opcode[i] = R1_Opcode[i] ? '1' : '0';
@@ -1047,6 +1065,22 @@ void decodeALUInstructionOperands(){
 			staCount++;
 		if (operation[i]==tmpMOV_Opcode[i])
 			movCount++;
+	/*
+	 *  if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+		if (operation[i]==tmpJGE_Opcode[i])
+			jgeCount++;
+		if (operation[i]==tmpJLE_Opcode[i])
+			jleCount++;
+		if (operation[i]==tmpJNE_Opcode[i])
+			jneCount++;
+		if (operation[i]==tmpJEQ_Opcode[i])
+			jeqCount++;
+		if (operation[i]==tmpDMP_Opcode[i])
+			dmpCount++;
+	 */
 
 		if (operand1[i]==tmpR0_Opcode[i])
 			operand1R0Count++;
@@ -1166,15 +1200,19 @@ void decodeALUInstructionOperands(){
 		instructionOperation=135;
 	/*
 	else if (mviCount==8)
-		instructionOperation=;
+		instructionOperation=136;
 	else if (jmpCount==8)
-		instructionOperation=;
+		instructionOperation=137;
 	else if (jgeCount==8)
-		instructionOperation=;
+		instructionOperation=138;
 	else if (jleCount==8)
-		instructionOperation=;
+		instructionOperation=139;
 	else if (jneCount==8)
-		instructionOperation=;
+		instructionOperation=140;
+	else if (jeqCount==8)
+		instructionOperation=141;
+	else if (dmpCount==8)
+		instructionOperation=142;
 	 */
 
 	if (operand1R0Count==8)
@@ -1305,16 +1343,20 @@ void callAppropriateFunction(){
 	else if (instructionOperation==135)
 		mov(instructionOperand1, instructionOperand2, instructionOperand3);
 	/*
-	else if (instructionOperation==)
+	else if (instructionOperation==136)
 		mvi(instructionOperand1,);
-	else if (instructionOperation==)
+	else if (instructionOperation==137)
 		jmp(instructionOperand1);
-	else if (instructionOperation==)
+	else if (instructionOperation==138)
 		jge(instructionOperand1, instructionOperand2, instructionOperand3);
-	else if (instructionOperation==)
+	else if (instructionOperation==139)
 		jle(instructionOperand1, instructionOperand2, instructionOperand3);
-	eles if (instructionOperation==)
+	else if (instructionOperation==140)
 		jne(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==141)
+		jeq(instrucitonOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==142)
+		dmp();
 	 */
 	return;
 }
