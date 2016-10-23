@@ -1368,14 +1368,14 @@ void callAppropriateFunction(){
 // Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register
 void mov(int z, int x, int y){
 	bool tempR1[32], tempR2[32], tempA[32];
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
 
 	for(int i=0; i<32; i++){
 		tempR2[i] = tempR1[i];
 	}
 
-//function to decide which register is deffined by z
+//function to decide which register is defined by z
 	findDestinationRegister(z, tempR2);
 
 }
@@ -1387,9 +1387,9 @@ void mod(int z, int x, int y){
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	function to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	dividend = convertBinaryTodecimal(tempR1,32);
@@ -1436,7 +1436,7 @@ void mod(int z, int x, int y){
 
 	convertDecimalToBinary(dividend,finalResult);
 
-//	function to decide which register is deffined by z
+//	function to decide which register is defined by z
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
@@ -1451,9 +1451,9 @@ void div(int z, int x, int y){
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	dividend = convertBinaryTodecimal(tempR1,32);
@@ -1499,7 +1499,7 @@ void div(int z, int x, int y){
 	}
 
 	convertDecimalToBinary(q,finalResult);
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
@@ -1513,9 +1513,9 @@ void mul(int z, int x, int y){
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempR11[64], tempR22[64], tempA[32], tempAA[64];
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	int n = convertBinaryTodecimal(tempR2,32);
@@ -1558,10 +1558,10 @@ void mul(int z, int x, int y){
 	for(int i=0; i<32; i++){
 		temp[i]=tempAA[i+32];
 	}
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, temp);
 
-// flag updateing
+// flag updating
 	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; printf("There is a overflow after MUL operation !!!");break;} }
 	if(convertBinaryTodecimal(temp,32) == 0){ zeroFlag = 1;}
 }
@@ -1573,10 +1573,10 @@ void add(int z, int x, int y) {
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32];
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
 
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	while(i>=0){
@@ -1588,10 +1588,10 @@ void add(int z, int x, int y) {
 		i--;
 	}
 
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, tempA);
 
-// flag updateing
+// flag updating
 	if(carry == 1){carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; printf("There is a overflow and carry after ADD operation !!!");}
 }
 
@@ -1602,9 +1602,9 @@ void sub(int z, int x, int y){
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
@@ -1631,10 +1631,10 @@ void sub(int z, int x, int y){
 		i--;
 	}
 
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, tempA2);
 
-// flag updateing
+// flag updating
 	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
 		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
 		printf("There is a overflow after SUB operation !!!");
@@ -1697,7 +1697,7 @@ int convertBinaryTodecimal(bool *bits, int loc){
 
 void findSourceRegister(int x, bool *tempR1){
 
-//	Switch case to deside which register is deffined by x
+//	Switch case to deside which register is defined by x
 	switch(x){
 
 		case 0:
@@ -1804,7 +1804,7 @@ void findSourceRegister(int x, bool *tempR1){
 
 void findDestinationRegister(int z, bool *tempA){
 
-//	Switch case to deside which register is deffined by z
+//	Switch case to deside which register is defined by z
 	switch(z){
 
 		case 0:
