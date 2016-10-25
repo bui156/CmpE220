@@ -51,11 +51,10 @@ bool R12_Opcode [8] = {0,0,0,0,1,1,0,1}; //13
 bool R13_Opcode [8] = {0,0,0,0,1,1,1,0}; //14
 bool R14_Opcode [8] = {0,0,0,0,1,1,1,1}; //15
 bool R15_Opcode [8] = {0,0,0,1,0,0,0,0}; //16
-/*
 bool L1_Opcode [8] = {0,0,0,1,0,0,0,1};	//17
 bool L2_Opcode [8] = {0,0,0,1,0,0,1,0};	//18
 bool L3_Opcode [8] = {0,0,0,1,0,0,1,1};	//19
-*/
+
 //Opcodes for ALU Operations
 bool ADD_Opcode [8] = {1,0,0,0,0,0,0,0}; //128
 bool SUB_Opcode [8] = {1,0,0,0,0,0,0,1}; //129
@@ -65,7 +64,6 @@ bool MOD_Opcode [8] = {1,0,0,0,0,1,0,0}; //132
 bool LDA_Opcode [8] = {1,0,0,0,0,1,0,1}; //133
 bool STA_Opcode [8] = {1,0,0,0,0,1,1,0}; //134
 bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
-/*
 bool MVI_Opcode [8] = {1,0,0,0,1,0,0,0}; //136
 bool JMP_Opcode [8] = {1,0,0,0,1,0,0,1}; //137
 bool JGE_Opcode [8] = {1,0,0,0,1,0,1,0}; //138
@@ -73,8 +71,6 @@ bool JLE_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
 bool JNE_Opcode [8] = {1,0,0,0,1,1,0,0}; //140
 bool JEQ_Opcode [8] = {1,0,0,0,1,1,0,1}; //141
 bool DMP_Opcode [8] = {1,0,0,0,1,1,1,0}; //142
-*/
-
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
@@ -121,7 +117,7 @@ int instructionOperand2 = 0;
 int instructionOperand3 = 0;
 int exitCodeCount = 0;
 
-//Fuction prototype for different user difined functions
+//Function prototype for different user defined functions
 void LDA(int); //This function will copy the contents of 4 consecutive bytes starting from the specified byte address into accumulator
 void STA(int); //This function will copy the contents of accumulator into 4 consecutive bytes starting from the specified byte address
 void validDataMemoryAddressCheck(int memoryLocation);
@@ -183,11 +179,11 @@ int main(){
 			if (operationType == 1)//ALU Type Instruction: Operation, Operand1, Operand2, Operand3
 				decodeALUInstructionOperands();
 			else if (operationType == 2) //MVI Instruction
-				;
+				;	//decodeMVIInstructionOperand();
 			else if (operationType == 3) //JMP Instruction
-				;
+				;	//decodeJMPInstructionOperand();
 			else if (operationType == 4) //DMP Instruction
-				;
+				;	//decodeDMPInstructionOperand();
 			callAppropriateFunction();
 		}
 	}
@@ -233,17 +229,12 @@ void STA(int finalMemoryLocation) {
 }
 
 void validDataMemoryAddressCheck(int memoryLocation){
-
-	if (memoryLocation <= 1024 || memoryLocation > 4092) {
+	if (memoryLocation <= 1024 || memoryLocation > 4092)
 		validAddressFlag = 0;
-	}
-
 }
 
 void memoryDump() {
-
 	int i = 0;
-
 	/*
 	printf("\n Flag Register: ");
 
@@ -415,7 +406,6 @@ void memoryDump() {
 
 		if (i%2 != 0)
 			printf("\n");
-
 	}
 
 	return;
@@ -780,15 +770,16 @@ int StringRegistersToInt(string strNew){
 void parseInstructionFromMemory(){
 	//Start of Instruction Memory is 1024 --> startMemLocation
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
-		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
-		//mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0, jeqCount = 0, dmpCount = 0;
+		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0,
+		mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0,
+		jneCount = 0, jeqCount = 0, dmpCount = 0;
 
 	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
-		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8];
-		//tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8],
-			//tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
+		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8],
+		 tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8],
+		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
 
-	for (int i = 0; i< 8; i++){
+	for (int i = 0; i < 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
 		tmpSUB_Opcode[i] = SUB_Opcode[i] ? '1' : '0';
 		tmpMUL_Opcode[i] = MUL_Opcode[i] ? '1' : '0';
@@ -797,7 +788,6 @@ void parseInstructionFromMemory(){
 		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
 		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
 		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
-		/*
 		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
 		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
 		tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
@@ -805,13 +795,11 @@ void parseInstructionFromMemory(){
 		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
 		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
 		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
-		 */
 	}
 
 	//read in opcode
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 8; i++)
 		operation[i] = currentInstruction[i];
-	}
 
 	//"decode" opcode. Compare with function opcodes.
 	for (int i = 0; i < 8; i++) {
@@ -831,7 +819,6 @@ void parseInstructionFromMemory(){
 			staCount++;
 		if (operation[i]==tmpMOV_Opcode[i])
 			movCount++;
-		/*
 		if (operation[i]==tmpMVI_Opcode[i])
 			mviCount++;
 		if (operation[i]==tmpJMP_Opcode[i])
@@ -846,13 +833,15 @@ void parseInstructionFromMemory(){
 			jeqCount++;
 		if (operation[i]==tmpDMP_Opcode[i])
 			dmpCount++;
-		*/
 	}
 
 	//if ALU instruction = Operation, Operand1, Operand2, Operand3
-	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 || modCount==8 || ldaCount==8 ||
-			staCount==8 || movCount==8) { //jgeCount==8 || jleCount==8 || jneCount==8 || jeqCount==8
+	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 ||
+		modCount==8 || ldaCount==8 || staCount==8 || movCount==8 ||
+		jgeCount==8 || jleCount==8 || jneCount==8 || jeqCount==8) {
+
 		operationType = 1; //Set to ALU Type Instruction
+
 		for (int i = 8; i < 32; i++) {
 			if (i >= 8 && i <= 15)
 				operand1[i-8] = currentInstruction[i];
@@ -982,15 +971,15 @@ void getCurrentInstruction(){
  *******************************************/
 void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
-		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
-	/*
-	 *  mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0, jneCount = 0, jeqCount=0, dmpCount=0;
-	 */
+		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0,
+	    mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0,
+		jneCount = 0, jeqCount=0, dmpCount=0;
 
 	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
 		operand1R4Count = 0, operand1R5Count = 0, operand1R6Count = 0, operand1R7Count = 0,
 		operand1R8Count = 0, operand1R9Count = 0, operand1R10Count = 0, operand1R11Count = 0,
-		operand1R12Count = 0, operand1R13Count = 0, operand1R14Count = 0, operand1R15Count = 0;
+		operand1R12Count = 0, operand1R13Count = 0, operand1R14Count = 0, operand1R15Count = 0,
+		operand1L1Count = 0, operand1L2Count = 0, operand1L3Count = 0;
 
 	int operand2R0Count = 0, operand2R1Count = 0, operand2R2Count = 0, operand2R3Count = 0,
 		operand2R4Count = 0, operand2R5Count = 0, operand2R6Count = 0, operand2R7Count = 0,
@@ -1000,18 +989,18 @@ void decodeALUInstructionOperands(){
 	int operand3R0Count = 0, operand3R1Count = 0, operand3R2Count = 0, operand3R3Count = 0,
 		operand3R4Count = 0, operand3R5Count = 0, operand3R6Count = 0, operand3R7Count = 0,
 		operand3R8Count = 0, operand3R9Count = 0, operand3R10Count = 0, operand3R11Count = 0,
-		operand3R12Count = 0, operand3R13Count = 0, operand3R14Count = 0, operand3R15Count = 0;
+		operand3R12Count = 0, operand3R13Count = 0, operand3R14Count = 0, operand3R15Count = 0,
+		operand3L1Count = 0, operand3L2Count = 0, operand3L3Count = 0;
 
 	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
 		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8],
 		 tmpR0_Opcode[8], tmpR1_Opcode[8], tmpR2_Opcode[8], tmpR3_Opcode[8],
 		 tmpR4_Opcode[8], tmpR5_Opcode[8], tmpR6_Opcode[8], tmpR7_Opcode[8],
 		 tmpR8_Opcode[8], tmpR9_Opcode[8], tmpR10_Opcode[8], tmpR11_Opcode[8],
-		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8];
-	/*
-	 *   tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8], tmpJNE_Opcode[8],
-	 *   tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
-	 */
+		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8],
+	     tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGE_Opcode[8], tmpJLE_Opcode[8],
+		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8],
+		 tmpL1_Opcode[8], tmpL2_Opcode[8], tmpL3_Opcode[8];
 
 	for (int i = 0; i< 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
@@ -1022,15 +1011,14 @@ void decodeALUInstructionOperands(){
 		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
 		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
 		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
-		/*
-		 * tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
-		 * tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
-		 * tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
-		 * tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
-		 * tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
-		 * tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
-		 * tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
-		 */
+		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		tmpJGE_Opcode[i] = JGE_Opcode[i] ? '1' : '0';
+		tmpJLE_Opcode[i] = JLE_Opcode[i] ? '1' : '0';
+		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
+
 		tmpR0_Opcode[i] = R0_Opcode[i] ? '1' : '0';
 		tmpR1_Opcode[i] = R1_Opcode[i] ? '1' : '0';
 		tmpR2_Opcode[i] = R2_Opcode[i] ? '1' : '0';
@@ -1066,8 +1054,7 @@ void decodeALUInstructionOperands(){
 			staCount++;
 		if (operation[i]==tmpMOV_Opcode[i])
 			movCount++;
-	/*
-	 *  if (operation[i]==tmpMVI_Opcode[i])
+	    if (operation[i]==tmpMVI_Opcode[i])
 			mviCount++;
 		if (operation[i]==tmpJMP_Opcode[i])
 			jmpCount++;
@@ -1081,7 +1068,6 @@ void decodeALUInstructionOperands(){
 			jeqCount++;
 		if (operation[i]==tmpDMP_Opcode[i])
 			dmpCount++;
-	 */
 
 		if (operand1[i]==tmpR0_Opcode[i])
 			operand1R0Count++;
@@ -1115,14 +1101,12 @@ void decodeALUInstructionOperands(){
 			operand1R14Count++;
 		if (operand1[i]==tmpR15_Opcode[i])
 			operand1R15Count++;
-	/*
 		if (operand1[i]==tmpL1_Opcode[i])
 			operand1L1Count++;
 		if (operand1[i]==tmpL2_Opcode[i])
 			operand1L2Count++;
 		if (operand1[i]==tmpL3_Opcode[i])
 			operand1L3Count++;
-	 */
 
 		if (operand2[i]==tmpR0_Opcode[i])
 			operand2R0Count++;
@@ -1189,14 +1173,12 @@ void decodeALUInstructionOperands(){
 			operand3R14Count++;
 		if (operand3[i]==tmpR15_Opcode[i])
 			operand3R15Count++;
-	/*
 	  	if (operand3[i]==tmpL1_Opcode[i])
 	  		operand3L1Count++;
 	  	if (operand3[i]==tmpL2_Opcode[i])
 	  		operand3L2Count++;
 	  	if (operand3[i]==tmpL3_Opcode[i])
 	  		operand3L3Count++;
-	 */
 	}
 
 	if (addCount==8)
