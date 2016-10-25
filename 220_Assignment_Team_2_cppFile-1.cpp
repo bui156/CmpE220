@@ -29,7 +29,12 @@ bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 		                            0,0,0,0,0,0,0,0,
 									0,0,0,0,0,1,0,0,
 									0,0,0,0,0,0,0,0};
+//Program Counter is startMemLocation
 int startMemLocation = 1024;
+//L1, L2, and L3 are the address locations in instruction memory for the Labels.
+int L1 = 0;
+int L2 = 0;
+int L3 = 0;
 int operationType = 0;
 
 //Opcodes for Registers
@@ -178,6 +183,7 @@ int main(){
 		if (exitCodeCount != 8){
 			if (operationType == 1)//ALU Type Instruction: Operation, Operand1, Operand2, Operand3
 				decodeALUInstructionOperands();
+				startMemLocation += 4;
 			else if (operationType == 2) //MVI Instruction
 				;	//decodeMVIInstructionOperand();
 			else if (operationType == 3) //JMP Instruction
@@ -962,7 +968,7 @@ void getCurrentInstruction(){
 	}
 	currentInstruction[33] = '\0';
 
-	startMemLocation += 4;
+	//startMemLocation += 4;
 
 }
 /*******************************************
@@ -973,7 +979,7 @@ void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0,
 	    mviCount = 0, jmpCount = 0, jgeCount = 0, jleCount = 0,
-		jneCount = 0, jeqCount=0, dmpCount=0;
+		jneCount = 0, jeqCount = 0, dmpCount = 0;
 
 	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
 		operand1R4Count = 0, operand1R5Count = 0, operand1R6Count = 0, operand1R7Count = 0,
@@ -1197,7 +1203,6 @@ void decodeALUInstructionOperands(){
 		instructionOperation=134;
 	else if (movCount==8)
 		instructionOperation=135;
-	/*
 	else if (mviCount==8)
 		instructionOperation=136;
 	else if (jmpCount==8)
@@ -1212,7 +1217,6 @@ void decodeALUInstructionOperands(){
 		instructionOperation=141;
 	else if (dmpCount==8)
 		instructionOperation=142;
-	 */
 
 	if (operand1R0Count==8)
 		instructionOperand1=0;
@@ -1246,6 +1250,12 @@ void decodeALUInstructionOperands(){
 		instructionOperand1=14;
 	else if (operand1R15Count==8)
 		instructionOperand1=15;
+	else if (operand1L1Count==8)
+		instructionOperand1=L1;
+	else if (operand1L2Count==8)
+		instructionOperand1=L2;
+	else if (operand1L3Count==8)
+		instructionOperand1=L3;
 
 	if (operand2R0Count==8)
 		instructionOperand2=0;
@@ -1312,6 +1322,12 @@ void decodeALUInstructionOperands(){
 		instructionOperand3=14;
 	else if (operand3R15Count==8)
 		instructionOperand3=15;
+	else if (operand3L1Count==8)
+		instructionOperand3=L1;
+	else if (operand3L2Count==8)
+		instructionOperand3=L2;
+	else if (operand3L3Count==8)
+		instructionOperand3=L3;
 
 	return;
 }
