@@ -127,6 +127,7 @@ void STA(int); //This function will copy the contents of accumulator into 4 cons
 void validDataMemoryAddressCheck(int memoryLocation);
 void memoryDump();
 void readFromFile(string fileName);
+void decodeInstructionFromFile(string textLine);
 void instructionIntoMemory(char* token,int memLocation);
 ////////////////////////////////////////////////
 void parseInstructionFromMemory();
