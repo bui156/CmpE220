@@ -1214,7 +1214,7 @@ void JEQ(int x, int y, bool *L){ //Jump if equal
 
 // Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is less than the content of register y then stores the array L content into program counter register 	
-void JIL(int x, int y, bool *L){ //Jump if less than
+void JLT(int x, int y, bool *L){ //Jump if less than
 	
 	sub(0,y,x);
 	unsigned int n = convertBinaryTodecimal(R0,32);
@@ -1227,7 +1227,7 @@ void JIL(int x, int y, bool *L){ //Jump if less than
 
 // Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is greater than the content of register y then stores the array L content into program counter register 
-void JIG(int x, int y, bool *L){ //Jump if greater than
+void JGT(int x, int y, bool *L){ //Jump if greater than
 
 	sub(0,x,y);
 	unsigned int n = convertBinaryTodecimal(R0,32);
