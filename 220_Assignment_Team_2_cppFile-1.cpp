@@ -165,7 +165,10 @@ void mul(int z, int x, int y);
 void div(int z, int x, int y);
 void mod(int z, int x, int y);
 void mov(int z, int x, int y);
-
+void JEQ(int x, int y, int L); //Jump if equal 
+void JLT(int x, int y, int L); //Jump if less than
+void JGT(int x, int y, int L); //Jump if greater than 
+void JNE(int x, int y, int L); //Jump if not equal
 
 int main(){
 
@@ -1551,8 +1554,52 @@ void callAppropriateFunction(){
 }
 
 /******************************************************************
- Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD
+ Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
+ 
+// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is equal to content of register y then stores the array L content into program counter register 
+void JEQ(int x, int y, int L){ //Jump if equal 
+	
+	sub(0,x,y);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
+	if(n == 0){
+		startMemLocation = L;
+	}
+}
+
+// Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is less than the content of register y then stores the array L content into program counter register 	
+void JLT(int x, int y, int L){ //Jump if less than
+	
+	sub(0,y,x);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
+	if((n > 0) && (overflowFlag==0)){
+		startMemLocation = L;
+	}	
+}
+
+// Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is greater than the content of register y then stores the array L content into program counter register 
+void JGT(int x, int y, int L){ //Jump if greater than
+
+	sub(0,x,y);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
+	if((n > 0) && (overflowFlag==0)){
+		startMemLocation = L;
+	}
+}
+
+// Jump if not equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// If content of register x is greater than the content of register y then stores the array L content into program counter register
+void JNE(int x, int y, int L){ //Jump if not equal
+
+	sub(0,x,y);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
+	if(n != 0) { 
+		startMemLocation = L;
+	}
+}
 
 // Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register
 void mov(int z, int x, int y){
@@ -2097,4 +2144,3 @@ void findDestinationRegister(int z, bool *tempA){
 			break;
 	}
 }
-
