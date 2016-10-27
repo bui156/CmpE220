@@ -1,6 +1,6 @@
 // Please save this as ".cpp" file
 
-# include <conio.h>
+//# include <conio.h>
 # include <stdio.h>
 # include <string>
 # include <stdlib.h>
@@ -9,6 +9,7 @@
 # include <iostream>
 # include <fstream>
 # include <cstdlib>
+# include <bitset>
 
 using namespace std;
 
@@ -81,6 +82,7 @@ void instructionIntoMemory(char* token,int memLocation);
 int MemoryAddressing(int imm, int rdx, int rcx, int S);
 int StringMemoryAddressing(string str);
 int StringRegistersToInt(string strNew);
+void LEA(string str);
 
 int main(){
 
@@ -290,10 +292,10 @@ void memoryDump() {
 	printf("%X",convertBinaryTodecimal(vOut));
 
 	//Memory dump
-	cout<<endl<<endl;
+	/*cout<<endl<<endl;
 	printf("Memory: \n");
 
-	for(int i = 1024; i<=3072; i++) {
+	for(int i = 1024; i<=2048; i++) {
 		printf(" Memory Location: %X: ",i);
 		//char vOut[9];
 		for(int j=0;j<8;j++){
@@ -305,7 +307,7 @@ void memoryDump() {
 		if (i%2 != 0)
 			printf("\n");
 
-	}
+	}*/
 
 	return;
 }
@@ -347,7 +349,13 @@ void decodeInstruction(string textLine){
 
 	while (pch != NULL)
 	{
-		if(strcmp(pch,"MFA")==0){
+		if(strcmp(pch,"LEA")==0){
+			//cout << "NISHANT HERE" << endl;
+			pch = strtok (NULL, "");
+			//cout << pch << endl;
+			LEA(pch);
+		}
+	else if(strcmp(pch,"MFA")==0){
 			cout<<"IN MFA"<<endl;
 			pch = strtok (NULL, " ");
 			//Call Nishants Function with pch
@@ -504,6 +512,105 @@ void instructionIntoMemory(char* token,int memLocation) {
 																						memory[memLocation][i] = R15_Opcode[i];
 																					}
 																				}
+}
+
+void LEA(string str){
+	unsigned first = 0;
+	unsigned last = str.find(',');
+	string strNew = str.substr (first,last-first);
+	//cout << "LEA register: " << strNew << endl;
+	int outRegister = StringRegistersToInt(strNew);
+	//cout << outRegister << endl;
+
+	first = last;
+	last = str.find(')');
+	string strNew2 = str.substr (first+1,last-first);
+	//cout << strNew2 << endl;
+	//cout << "LEA(decimal)=" << StringMemoryAddressing(strNew2) << endl;
+
+	int RegisterValue = StringMemoryAddressing(strNew2);
+	std::bitset<32>bits(RegisterValue);
+	//printf("\n R4: ");
+	if(strcmp(strNew.c_str(),"R0")==0){
+		for(int i = 0; i < 32; i++){
+			R0[i] = bits[31-i];
+		}
+	}
+	if(strcmp(strNew.c_str(),"R1")==0){
+			for(int i = 0; i < 32; i++){
+				R1[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R2")==0){
+			for(int i = 0; i < 32; i++){
+				R2[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R3")==0){
+			for(int i = 0; i < 32; i++){
+				R3[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R4")==0){
+			for(int i = 0; i < 32; i++){
+				R4[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R5")==0){
+			for(int i = 0; i < 32; i++){
+				R5[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R6")==0){
+			for(int i = 0; i < 32; i++){
+				R6[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R7")==0){
+			for(int i = 0; i < 32; i++){
+				R7[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R8")==0){
+			for(int i = 0; i < 32; i++){
+				R8[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R9")==0){
+			for(int i = 0; i < 32; i++){
+				R9[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R10")==0){
+			for(int i = 0; i < 32; i++){
+				R10[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R11")==0){
+			for(int i = 0; i < 32; i++){
+				R11[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R12")==0){
+			for(int i = 0; i < 32; i++){
+				R12[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R13")==0){
+			for(int i = 0; i < 32; i++){
+				R13[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R14")==0){
+			for(int i = 0; i < 32; i++){
+				R14[i] = bits[31-i];
+			}
+		}
+	if(strcmp(strNew.c_str(),"R15")==0){
+			for(int i = 0; i < 32; i++){
+				R15[i] = bits[31-i];
+			}
+		}
 }
 
 int MemoryAddressing(int imm=0, int rdx=0, int rcx=0, int S=1){
