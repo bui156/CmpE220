@@ -9,15 +9,16 @@
 # include <iostream>
 # include <fstream>
 # include <cstdlib>
+# include <string.h>
 
 using namespace std;
 
-# include "conversions.h"
+//# include "conversions.h"
 
 //Defining the parts of processor
 bool memory [4096][8];
 bool flags [8];
-bool signFlag =0, overflowFlag =0, zeroFlag =0, carryFlag =0;
+bool signFlag=0, overflowFlag=0, zeroFlag=0, carryFlag=0;
 bool validAddressFlag = 1;
 bool accumulator [32] = {1,1,1,1,1,1,1,1,
 		                 0,0,0,0,0,0,0,1,
@@ -29,7 +30,13 @@ bool programCounterRegister [32] = {0,0,0,0,0,0,0,0,
 		                            0,0,0,0,0,0,0,0,
 									0,0,0,0,0,1,0,0,
 									0,0,0,0,0,0,0,0};
+//Program Counter is startMemLocation
 int startMemLocation = 1024;
+//L1, L2, and L3 are the address locations in instruction memory for the Labels.
+int L1 = 0;
+int L2 = 0;
+int L3 = 0;
+int operationType = 0;
 
 //Opcodes for Registers
 char tmpExit_Opcode [8] = {'1','0','1','0','1','0','1','0'};
@@ -50,6 +57,9 @@ bool R12_Opcode [8] = {0,0,0,0,1,1,0,1}; //13
 bool R13_Opcode [8] = {0,0,0,0,1,1,1,0}; //14
 bool R14_Opcode [8] = {0,0,0,0,1,1,1,1}; //15
 bool R15_Opcode [8] = {0,0,0,1,0,0,0,0}; //16
+bool L1_Opcode [8] = {0,0,0,1,0,0,0,1};	//17
+bool L2_Opcode [8] = {0,0,0,1,0,0,1,0};	//18
+bool L3_Opcode [8] = {0,0,0,1,0,0,1,1};	//19
 
 //Opcodes for ALU Operations
 bool ADD_Opcode [8] = {1,0,0,0,0,0,0,0}; //128
@@ -60,51 +70,47 @@ bool MOD_Opcode [8] = {1,0,0,0,0,1,0,0}; //132
 bool LDA_Opcode [8] = {1,0,0,0,0,1,0,1}; //133
 bool STA_Opcode [8] = {1,0,0,0,0,1,1,0}; //134
 bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
+bool MVI_Opcode [8] = {1,0,0,0,1,0,0,0}; //136
+bool JMP_Opcode [8] = {1,0,0,0,1,0,0,1}; //137
+bool JGT_Opcode [8] = {1,0,0,0,1,0,1,0}; //138
+bool JLT_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
+bool JNE_Opcode [8] = {1,0,0,0,1,1,0,0}; //140
+bool JEQ_Opcode [8] = {1,0,0,0,1,1,0,1}; //141
+bool DMP_Opcode [8] = {1,0,0,0,1,1,1,0}; //142
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
-bool R1 [32] = {1,1,1,0,1,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1}; //1
-bool R2 [32] = {1,1,1,1,0,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1}; //2
+bool R1 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1}; //1
+bool R2 [32] = {0,0,0,0,0,0,0,0,
+		        0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,1,0}; //2
 bool R3 [32] = {0,0,0,0,0,0,0,0,
 			    0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,1,1,1}; //3
+				0,0,0,0,0,0,1,1}; //3
 bool R4 [32] = {0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,1,0,0}; //4
-bool R5 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0}; //5
-bool R6 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0}; //6
-bool R7 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,1,1,0,0}; //0xC
+bool R5 [32];
+bool R6 [32];
+bool R7 [32];
 bool R8 [32];
 bool R9 [32];
-bool R10 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,1,1,0,0}; //0xC
-bool R11 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,1,0,0}; //4
+bool R10 [32];
+bool R11 [32];
 bool R12 [32];
 bool R13 [32];
-bool R14 [32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-bool R15 [32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1};
+bool R14 [32];
+bool R15 [32];
+
+//flags for mvi and jmp instructions
+bool MVI_flag = false;
+bool JMP_flag = false;
 
 //Variables needed in program
 char checkOperend[9];
@@ -121,7 +127,7 @@ int instructionOperand2 = 0;
 int instructionOperand3 = 0;
 int exitCodeCount = 0;
 
-//Fuction prototype for different user difined functions
+//Function prototype for different user defined functions
 void LDA(int); //This function will copy the contents of 4 consecutive bytes starting from the specified byte address into accumulator
 void STA(int); //This function will copy the contents of accumulator into 4 consecutive bytes starting from the specified byte address
 void validDataMemoryAddressCheck(int memoryLocation);
@@ -129,9 +135,12 @@ void memoryDump();
 void readFromFile(string fileName);
 void decodeInstructionFromFile(string textLine);
 void instructionIntoMemory(char* token,int memLocation);
+int convertBinaryToDecimal(char* bits);
+string convertDecimalToBinary(int n);
+////////////////////////////////////////////////
 void parseInstructionFromMemory();
 void getCurrentInstruction();
-void decodeInstructionOperationOperand();
+void decodeALUInstructionOperands();
 void callAppropriateFunction();
 //void add(int z, int x, int y);
 //void sub(int z, int x, int y);
@@ -148,18 +157,18 @@ int StringRegistersToInt(string strNew);
 // Function declaration for ALU operation
 void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
-int convertBinaryTodecimal(bool *bits, int);
-void convertDecimalToBinary(int dec, bool *result);
+int convertBinaryToDecimal_N(bool *bits, int);
+void convertDecimalToBinary_N(int dec, bool *result);
 void add(int z, int x, int y);
 void sub(int z, int x, int y);
 void mul(int z, int x, int y);
 void div(int z, int x, int y);
 void mod(int z, int x, int y);
 void mov(int z, int x, int y);
-void JEQ(int x, int y, bool *L); //Jump if equal 
-void JLT(int x, int y, bool *L); //Jump if less than
-void JGT(int x, int y, bool *L); //Jump if greater than 
-void JNE(int x, int y, bool *L); //Jump if not equal
+void JEQ(int x, int y, int L); //Jump if equal 
+void JLT(int x, int y, int L); //Jump if less than
+void JGT(int x, int y, int L); //Jump if greater than 
+void JNE(int x, int y, int L); //Jump if not equal
 
 int main(){
 
@@ -172,32 +181,129 @@ int main(){
 
 	readFromFile(fileName);
 
-	printf("\n***************************************** Memory Dump Number 0 *******************************************\n");
 	memoryDump();
 
+	/*
 	//Start Program
 	cout<<"Starting Program"<<endl;
-	startMemLocation=1024; int count = 1;
+	startMemLocation=1024;
 	while (exitCodeCount != 8){
+		operationType = 0;
 		getCurrentInstruction();
 		parseInstructionFromMemory();
 		if (exitCodeCount != 8){
-			decodeInstructionOperationOperand();
+			if (operationType == 1) {//ALU Type Instruction: Operation, Operand1, Operand2, Operand3
+				decodeALUInstructionOperands();
+				startMemLocation += 4;
+			}
+			else if (operationType == 2) //MVI Instruction
+				;	//decodeMVIInstructionOperand();
+			else if (operationType == 3) //JMP Instruction
+				;	//decodeJMPInstructionOperand();
+			else if (operationType == 4) //DMP Instruction
+				;	//decodeDMPInstructionOperand();
 			callAppropriateFunction();
-			printf("\n***************************************** Memory Dump Number %d *******************************************\n", count);
-			memoryDump();
-			count++;
 		}
 	}
+	*/
 
-	printf("\n\n\nExit Code found: ");
 	for (int i = 0; i < 32; i++){
 		printf("%c", currentInstruction[i]);
 	}
-	printf("\n***************************************** Program End !!! *******************************************\n");
+	cout<<"Program Finished"<<endl;
 
-	//memoryDump();
+	memoryDump();
+
+	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3;
+
 }
+
+
+/**
+ * Converts hexadecimal input to binary
+ */
+char* covertHexToBinary(char *bits){
+
+	string sReturn = "";
+	int i;
+	int len = strlen(bits);
+	for (i = 0; i <= len-1;i++)
+	{
+		switch (*(bits+i))
+		{
+			case '0': sReturn.append ("0000"); break;
+			case '1': sReturn.append ("0001"); break;
+			case '2': sReturn.append ("0010"); break;
+			case '3': sReturn.append ("0011"); break;
+			case '4': sReturn.append ("0100"); break;
+			case '5': sReturn.append ("0101"); break;
+			case '6': sReturn.append ("0110"); break;
+			case '7': sReturn.append ("0111"); break;
+			case '8': sReturn.append ("1000"); break;
+			case '9': sReturn.append ("1001"); break;
+			case 'a': sReturn.append ("1010"); break;
+			case 'A': sReturn.append ("1010"); break;
+			case 'b': sReturn.append ("1011"); break;
+			case 'B': sReturn.append ("1011"); break;
+			case 'c': sReturn.append ("1100"); break;
+			case 'C': sReturn.append ("1100"); break;
+			case 'd': sReturn.append ("1101"); break;
+			case 'D': sReturn.append ("1101"); break;
+			case 'e': sReturn.append ("1110"); break;
+			case 'E': sReturn.append ("1110"); break;
+			case 'f': sReturn.append ("1111"); break;
+			case 'F': sReturn.append ("1111"); break;
+		}
+	}
+
+	strcpy(bits,sReturn.c_str());
+
+	return bits;
+}
+
+
+/**
+ * Converts Binary to Decimal of input
+ */
+int convertBinaryToDecimal(char *bits) {
+
+	int counter = 0;
+	int decimal = 0;
+	int loc = strlen(bits);
+
+	while (counter < loc)
+	{
+		if(*(bits+counter) == '1'){
+			decimal = (decimal + pow(2,(loc-counter)-1));
+		}
+		counter++;
+	}
+	return decimal;
+}
+
+string convertDecimalToBinary(int number){
+
+    string bin;
+    char holder=' ';
+    while(number!=0)
+    {
+        holder=number%2+'0';
+        bin=holder+bin;
+        number/=2;
+    }
+
+    int len = bin.length();
+
+    if(len!=8){
+        while(len!=8){
+            bin = "0" + bin;
+            len++;
+        }
+    }
+
+    return bin;
+}
+
 
 void LDA (int finalMemoryLocation) {
 
@@ -232,17 +338,12 @@ void STA(int finalMemoryLocation) {
 }
 
 void validDataMemoryAddressCheck(int memoryLocation){
-
-	if (memoryLocation <= 1024 || memoryLocation > 4092) {
+	if (memoryLocation <= 1024 || memoryLocation > 4092)
 		validAddressFlag = 0;
-	}
-
 }
 
 void memoryDump() {
-
 	int i = 0;
-
 	/*
 	printf("\n Flag Register: ");
 
@@ -397,14 +498,14 @@ void memoryDump() {
 	vOut[32] = '\0';
 	printf("%X",convertBinaryToDecimal(vOut));
 
-
 	//Memory dump
-/*
-	cout<<endl<<endl;	
+	cout<<endl<<endl;
 	printf("Memory: HEX: DEC\n");
+
 	//for(int i = 1024; i<=2055; i++) {
-	for (int i = 1024; i <= 1104; i++) { //Memory Range of 1024 - 4096
-		printf(" Memory Location: %X: ",i);
+	//for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
+	for (int i = 1024; i <=1104; i++) {
+		printf(" Memory Location: %d: ",i);
 		char vOut[9];
 		for(int j=0;j<8;j++){
 			vOut[j] = memory[i][j] ? '1' : '0';
@@ -414,9 +515,7 @@ void memoryDump() {
 
 		if (i%2 != 0)
 			printf("\n");
-
 	}
-*/
 
 	return;
 }
@@ -449,194 +548,268 @@ void readFromFile(string fileName){
 
 //Reads in Instruction from Text File
 //"Decodes" Instruction into each opcode/operand.
+//Converts operand into bits and stores into memory.
 void decodeInstructionFromFile(string textLine){
 
-	char* pch;
+    char* pch;
 
-	pch = strtok((char*)textLine.c_str()," ,\r");
+    pch = strtok((char*)textLine.c_str()," ,\r");
+    while (pch != NULL)
+    {
+        if(strcmp(pch,"MFA")==0){
+            cout<<"IN MFA"<<endl;
+            pch = strtok (NULL, " ");
+            cout<<"THE PCH TO PASS: "<<pch<<endl;
+            pch = strtok (NULL, " ,\r");
+        }else
+            if(strcmp(pch,"MTA")==0){
+                cout<<"IN MTA"<<endl;
+                pch = strtok (NULL, " ");
+                cout<<"THE PCH TO PASS: "<<pch<<endl;
+                pch = strtok (NULL, " ,\r");
+            }else
+                if(strcmp(pch,"JMP")==0){
+                    cout<<"IN JUMP"<<endl;
+                    instructionIntoMemory(pch,startMemLocation);
+                    startMemLocation++;
+                    JMP_flag = true;
+                    pch = strtok (NULL, " ,\r");
+                }else
+                    if(strcmp(pch,"MVI")==0){
+                        cout<<"IN MOVE INS"<<endl;
+                        instructionIntoMemory(pch,startMemLocation);
+                        startMemLocation++;
+                        MVI_flag = true;
+                        pch = strtok (NULL, " ,\r");
+                    }else
+                        if(strcmp(pch,"L1:")==0){
+                            cout<<"IN L1 TOKEN"<<endl;
+                            pch = strtok (NULL, " ,\r");
+                            L1=startMemLocation;
+                        }else
+                            if(strcmp(pch,"L2:")==0){
+                                cout<<"IN L2 TOKEN"<<endl;
+                                pch = strtok (NULL, " ,\r");
+                                L2=startMemLocation;
+                            }else
+                                if(strcmp(pch,"L3:")==0){
+                                    cout<<"IN L3 TOKEN"<<endl;
+                                    pch = strtok (NULL, " ,\r");
+                                    L3=startMemLocation;
+                                }else
+                                    {
+                                        cout<<"IN ELSE"<<endl;
+                                        instructionIntoMemory(pch,startMemLocation);
+                                        startMemLocation++;
+                                        pch = strtok (NULL, " ,\r");
+                                    }
+    }
 
-	while (pch != NULL)
-	{
-		if(strcmp(pch,"MFA")==0){
-			cout<<"IN MFA"<<endl;
-			pch = strtok (NULL, " ");
-			//Call Nishants Function with pch
-			int memaddr = StringMemoryAddressing(pch);
-			cout << "MemoryAddressing = " << memaddr << endl;
-			cout<<"THE PCH TO PASS: "<<pch<<endl;
-			//mov from MemoryAddressing to Accumulator
-			STA(memaddr);
-			cout << "updated accumulator" << endl;
-			pch = strtok (NULL, " ,\r");
-		}else
-			if(strcmp(pch,"MTA")==0){
-				cout<<"IN MTA"<<endl;
-				pch = strtok (NULL, " ");
-				//Call Nishants Function with pch
-				int memaddr = StringMemoryAddressing(pch);
-				cout << "MemoryAddressing = " << memaddr << endl;
-				cout<<"THE PCH TO PASS: "<<pch<<endl;
-				//mov from Accumulator to MemoryAddressing
-				LDA(memaddr);
-				cout << "updated MemoryAddress" << endl;
-				pch = strtok (NULL, " ,\r");
-			}else{
-				cout<<"IN ELSE"<<endl;
-				instructionIntoMemory(pch,startMemLocation);
-				startMemLocation++;
-				pch = strtok (NULL, " ,\r");
-			}
-	}
-
-	return ;
 }
 
-//Converts operand into bits and stores into memory.
 void instructionIntoMemory(char* token,int memLocation) {
 
-	cout<<"TOKEN: "<<token<<" in memory location "<<memLocation<<endl;
+    cout<<"TOKEN: "<<token<<" in memory location "<<memLocation<<endl;
 
-	if(strcmp(token,"ADD")==0){
-		cout<<"IN ADD"<<endl;
-		for (int i = 0; i < 8; i++){
-			memory[memLocation][i] = ADD_Opcode[i];
-		}
-	}else
-		if(strcmp(token,"SUB")==0){
-			cout<<"IN SUB"<<endl;
-			for (int i = 0; i < 8; i++){
-				memory[memLocation][i] = SUB_Opcode[i];
-			}
-		}else
-			if(strcmp(token,"MUL")==0){
-				cout<<"IN MUL"<<endl;
-				for (int i = 0; i < 8; i++){
-					memory[memLocation][i] = MUL_Opcode[i];
-				}
-			}else
-				if(strcmp(token,"DIV")==0){
-					cout<<"IN DIV"<<endl;
-					for (int i = 0; i < 8; i++){
-						memory[memLocation][i] = DIV_Opcode[i];
-					}
-				}else
-					if(strcmp(token,"MOD")==0){
-						cout<<"IN MOD"<<endl;
-						for (int i = 0; i < 8; i++){
-							memory[memLocation][i] = MOD_Opcode[i];
-						}
-					}else
-						if(strcmp(token,"MOV")==0){
-							cout<<"IN MOV"<<endl;
-							for (int i = 0; i < 8; i++){
-								memory[memLocation][i] = MOV_Opcode[i];
-							}
-						}else
-					if(strcmp(token,"R0")==0){
-						cout<<"IN R0"<<endl;
-						for (int i = 0; i < 8; i++){
-							memory[memLocation][i] = R0_Opcode[i];
-						}
-					}else
-						if(strcmp(token,"R1")==0){
-							cout<<"IN R1"<<endl;
-							for (int i = 0; i < 8; i++){
-								memory[memLocation][i] = R1_Opcode[i];
-							}
-						}else
-							if(strcmp(token,"R2")==0){
-								cout<<"IN R2"<<endl;
-								for (int i = 0; i < 8; i++){
-									memory[memLocation][i] = R2_Opcode[i];
-								}
-							}else
-								//if((strcmp(token,"R3")==0)||(strcmp(token,"R3\r")==0)){
-								if(strcmp(token,"R3")==0){
-									cout<<"IN R3"<<endl;
-									for (int i = 0; i < 8; i++){
-										memory[memLocation][i] = R3_Opcode[i];
-									}
-								}else
-									if(strcmp(token,"R4")==0){
-										cout<<"IN R4"<<endl;
-										for (int i = 0; i < 8; i++){
-											memory[memLocation][i] = R4_Opcode[i];
-										}
-									}else
-										if(strcmp(token,"R5")==0){
-											cout<<"IN R5"<<endl;
-											for (int i = 0; i < 8; i++){
-												memory[memLocation][i] = R5_Opcode[i];
-											}
-										}else
-											//if ((strcmp(token,"R6")==0) || (strcmp(token,"R6\r")==0)){
-											if(strcmp(token,"R6")==0){
-												cout<<"IN R6"<<endl;
-												for (int i = 0; i < 8; i++){
-													memory[memLocation][i] = R6_Opcode[i];
-												}
-											}else
-												if(strcmp(token,"R7")==0){
-													cout<<"IN R7"<<endl;
-													for (int i = 0; i < 8; i++){
-														memory[memLocation][i] = R7_Opcode[i];
-													}
-												}else
-													if(strcmp(token,"R8")==0){
-														cout<<"IN R8"<<endl;
-														for (int i = 0; i < 8; i++){
-															memory[memLocation][i] = R8_Opcode[i];
-														}
-													}else
-														if(strcmp(token,"R9")==0){
-															cout<<"IN R9"<<endl;
-															for (int i = 0; i < 8; i++){
-																memory[memLocation][i] = R9_Opcode[i];
-															}
-														}else
-															if(strcmp(token,"R10")==0){
-																cout<<"IN R10"<<endl;
-																for (int i = 0; i < 8; i++){
-																	memory[memLocation][i] = R10_Opcode[i];
-																}
-															}else
-																if(strcmp(token,"R11")==0){
-																	cout<<"IN R11"<<endl;
-																	for (int i = 0; i < 8; i++){
-																		memory[memLocation][i] = R11_Opcode[i];
-																	}
-																}else
-																	if(strcmp(token,"R12")==0){
-																		cout<<"IN R12"<<endl;
-																		for (int i = 0; i < 8; i++){
-																			memory[memLocation][i] = R12_Opcode[i];
-																		}
-																	}else
-																		if(strcmp(token,"R13")==0){
-																			cout<<"IN R13"<<endl;
-																			for (int i = 0; i < 8; i++){
-																				memory[memLocation][i] = R13_Opcode[i];
-																			}
-																		}else
-																			if(strcmp(token,"R14")==0){
-																				cout<<"IN R14"<<endl;
-																				for (int i = 0; i < 8; i++){
-																					memory[memLocation][i] = R14_Opcode[i];
-																				}
-																			}else
-																				if(strcmp(token,"R15")==0){
-																					cout<<"IN R15"<<endl;
-																					for (int i = 0; i < 8; i++){
-																						memory[memLocation][i] = R15_Opcode[i];
-																					}
-																				}else
-																					if(strcmp(token,"EXIT")==0){
-																						cout<<"EXIT CODE"<<endl;
-																						for (int i = 0; i < 8; i++){
-																							memory[memLocation][i] = exit_Opcode[i];
-																						}
-																					}
+    if(strcmp(token,"ADD")==0){
+        cout<<"IN ADD"<<endl;
+        for (int i = 0; i < 8; i++){
+            memory[memLocation][i] = ADD_Opcode[i];
+        }
+    }else
+        if(strcmp(token,"SUB")==0){
+            cout<<"IN SUB"<<endl;
+            for (int i = 0; i < 8; i++){
+                memory[memLocation][i] = SUB_Opcode[i];
+            }
+        }else
+            if(strcmp(token,"MUL")==0){
+                cout<<"IN MUL"<<endl;
+                for (int i = 0; i < 8; i++){
+                    memory[memLocation][i] = MUL_Opcode[i];
+                }
+            }else
+                if(strcmp(token,"DIV")==0){
+                    cout<<"IN DIV"<<endl;
+                    for (int i = 0; i < 8; i++){
+                        memory[memLocation][i] = DIV_Opcode[i];
+                    }
+                }else
+                    if(strcmp(token,"MVI")==0){
+                        cout<<"IN MVI"<<endl;
+                        for (int i = 0; i < 8; i++){
+                            memory[memLocation][i] = MVI_Opcode[i];
+                        }
+                    }else
+                        if(strcmp(token,"JMP")==0){
+                            cout<<"IN JMP"<<endl;
+                            for (int i = 0; i < 8; i++){
+                                memory[memLocation][i] = JMP_Opcode[i];
+                            }
+                        }else
+                            if(strcmp(token,"JGT")==0){
+                                cout<<"IN JGT"<<endl;
+                                for (int i = 0; i < 8; i++){
+                                    memory[memLocation][i] = JGT_Opcode[i];
+                                }
+                            }else
+                                if(strcmp(token,"JLT")==0){
+                                    cout<<"IN JLT"<<endl;
+                                    for (int i = 0; i < 8; i++){
+                                        memory[memLocation][i] = JLT_Opcode[i];
+                                    }
+                                }else
+                                    if(strcmp(token,"JEQ")==0){
+                                        cout<<"IN JEQ"<<endl;
+                                        for (int i = 0; i < 8; i++){
+                                            memory[memLocation][i] = JEQ_Opcode[i];
+                                        }
+                                    }else
+                                        if(strcmp(token,"JNE")==0){
+                                            cout<<"IN JNE"<<endl;
+                                            for (int i = 0; i < 8; i++){
+                                                memory[memLocation][i] = JNE_Opcode[i];
+                                            }
+                                        }else
+                                            if(strcmp(token,"L1")==0){
+                                                cout<<"IN L1"<<endl;
+                                                for (int i = 0; i < 8; i++){
+                                                    memory[memLocation][i] = L1_Opcode[i];
+                                                }
+                                                if(JMP_flag){
+                                                    startMemLocation+=2;
+                                                    JMP_flag = false;
+                                                }
+                                            }else
+                                                if(strcmp(token,"L2")==0){
+                                                    cout<<"IN L2"<<endl;
+                                                    for (int i = 0; i < 8; i++){
+                                                        memory[memLocation][i] = L2_Opcode[i];
+                                                    }
+                                                    if(JMP_flag){
+                                                        startMemLocation+=2;
+                                                        JMP_flag = false;
+                                                    }
+                                                }else
+                                                    if(strcmp(token,"L3")==0){
+                                                        cout<<"IN L3"<<endl;
+                                                        for (int i = 0; i < 8; i++){
+                                                            memory[memLocation][i] = L3_Opcode[i];
+                                                        }
+                                                        if(JMP_flag){
+                                                            startMemLocation+=2;
+                                                            JMP_flag = false;
+                                                        }
+                                                    }else
+                                                        if(strcmp(token,"R0")==0){
+                                                            cout<<"IN R0"<<endl;
+                                                            for (int i = 0; i < 8; i++){
+                                                                memory[memLocation][i] = R0_Opcode[i];
+                                                            }
+                                                        }else
+                                                            if(strcmp(token,"R1")==0){
+                                                                cout<<"IN R1"<<endl;
+                                                                for (int i = 0; i < 8; i++){
+                                                                    memory[memLocation][i] = R1_Opcode[i];
+                                                                }
+                                                            }else
+                                                                if(strcmp(token,"R2")==0){
+                                                                    cout<<"IN R2"<<endl;
+                                                                    for (int i = 0; i < 8; i++){
+                                                                        memory[memLocation][i] = R2_Opcode[i];
+                                                                    }
+                                                                }else
+                                                                    if(strcmp(token,"R3")==0){
+                                                                        cout<<"IN R3"<<endl;
+                                                                        for (int i = 0; i < 8; i++){
+                                                                            memory[memLocation][i] = R3_Opcode[i];
+                                                                        }
+                                                                    }else
+                                                                        if(strcmp(token,"R4")==0){
+                                                                            cout<<"IN R4"<<endl;
+                                                                            for (int i = 0; i < 8; i++){
+                                                                                memory[memLocation][i] = R4_Opcode[i];
+                                                                            }
+                                                                        }else
+                                                                            if(strcmp(token,"R5")==0){
+                                                                                cout<<"IN R5"<<endl;
+                                                                                for (int i = 0; i < 8; i++){
+                                                                                    memory[memLocation][i] = R5_Opcode[i];
+                                                                                }
+                                                                            }else
+                                                                                if(strcmp(token,"R6")==0){
+                                                                                    cout<<"IN R6"<<endl;
+                                                                                    for (int i = 0; i < 8; i++){
+                                                                                        memory[memLocation][i] = R6_Opcode[i];
+                                                                                    }
+                                                                                }else
+                                                                                    if(strcmp(token,"R7")==0){
+                                                                                        cout<<"IN R7"<<endl;
+                                                                                        for (int i = 0; i < 8; i++){
+                                                                                            memory[memLocation][i] = R7_Opcode[i];
+                                                                                        }
+                                                                                    }else
+                                                                                        if(strcmp(token,"R8")==0){
+                                                                                            cout<<"IN R8"<<endl;
+                                                                                            for (int i = 0; i < 8; i++){
+                                                                                                memory[memLocation][i] = R8_Opcode[i];
+                                                                                            }
+                                                                                        }else
+                                                                                            if(strcmp(token,"R9")==0){
+                                                                                                cout<<"IN R9"<<endl;
+                                                                                                for (int i = 0; i < 8; i++){
+                                                                                                    memory[memLocation][i] = R9_Opcode[i];
+                                                                                                }
+                                                                                            }else
+                                                                                                if(strcmp(token,"R10")==0){
+                                                                                                    cout<<"IN R10"<<endl;
+                                                                                                    for (int i = 0; i < 8; i++){
+                                                                                                        memory[memLocation][i] = R10_Opcode[i];
+                                                                                                    }
+                                                                                                }else
+                                                                                                    if(strcmp(token,"R11")==0){
+                                                                                                        cout<<"IN R11"<<endl;
+                                                                                                        for (int i = 0; i < 8; i++){
+                                                                                                            memory[memLocation][i] = R11_Opcode[i];
+                                                                                                        }
+                                                                                                    }else
+                                                                                                        if(strcmp(token,"R12")==0){
+                                                                                                            cout<<"IN R12"<<endl;
+                                                                                                            for (int i = 0; i < 8; i++){
+                                                                                                                memory[memLocation][i] = R12_Opcode[i];
+                                                                                                            }
+                                                                                                        }else
+                                                                                                            if(strcmp(token,"R13")==0){
+                                                                                                                cout<<"IN R13"<<endl;
+                                                                                                                for (int i = 0; i < 8; i++){
+                                                                                                                    memory[memLocation][i] = R13_Opcode[i];
+                                                                                                                }
+                                                                                                            }else
+                                                                                                                if(strcmp(token,"R14")==0){
+                                                                                                                    cout<<"IN R14"<<endl;
+                                                                                                                    for (int i = 0; i < 8; i++){
+                                                                                                                        memory[memLocation][i] = R14_Opcode[i];
+                                                                                                                    }
+                                                                                                                }else
+                                                                                                                    if(strcmp(token,"R15")==0){
+                                                                                                                        cout<<"IN R15"<<endl;
+                                                                                                                        for (int i = 0; i < 8; i++){
+                                                                                                                            memory[memLocation][i] = R15_Opcode[i];
+                                                                                                                        }
+                                                                                                                    }else
+                                                                                                                        if(MVI_flag){
+                                                                                                                            cout<<token<<endl;
+                                                                                                                            string num = convertDecimalToBinary(atoi(token));
+                                                                                                                            cout<<"STR:: "<<num<<endl;
+                                                                                                                            for (int i = 0; i < 8; i++){
+                                                                                                                                memory[memLocation][i] = num[i]=='1' ? 1 : 0;
+                                                                                                                            }
+                                                                                                                            startMemLocation++;
+                                                                                                                            MVI_flag = false;
+                                                                                                                        }
+
 }
+
 /****************************************
  * MemoryAddressing
  */
@@ -779,6 +952,111 @@ int StringRegistersToInt(string strNew){
 /*************************************************************/
 void parseInstructionFromMemory(){
 	//Start of Instruction Memory is 1024 --> startMemLocation
+	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
+		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0,
+		mviCount = 0, jmpCount = 0, jgtCount = 0, jltCount = 0,
+		jneCount = 0, jeqCount = 0, dmpCount = 0;
+
+	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
+		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8],
+		 tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGT_Opcode[8], tmpJLT_Opcode[8],
+		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
+
+	for (int i = 0; i < 8; i++){
+		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
+		tmpSUB_Opcode[i] = SUB_Opcode[i] ? '1' : '0';
+		tmpMUL_Opcode[i] = MUL_Opcode[i] ? '1' : '0';
+		tmpDIV_Opcode[i] = DIV_Opcode[i] ? '1' : '0';
+		tmpMOD_Opcode[i] = MOD_Opcode[i] ? '1' : '0';
+		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
+		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
+		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
+		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		tmpJGT_Opcode[i] = JGT_Opcode[i] ? '1' : '0';
+		tmpJLT_Opcode[i] = JLT_Opcode[i] ? '1' : '0';
+		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
+	}
+
+	//read in opcode
+	for (int i = 0; i < 8; i++)
+		operation[i] = currentInstruction[i];
+
+	//"decode" opcode. Compare with function opcodes.
+	for (int i = 0; i < 8; i++) {
+		if (operation[i]==tmpADD_Opcode[i])
+			addCount++;
+		if (operation[i]==tmpSUB_Opcode[i])
+			subCount++;
+		if (operation[i]==tmpMUL_Opcode[i])
+			mulCount++;
+		if (operation[i]==tmpDIV_Opcode[i])
+			divCount++;
+		if (operation[i]==tmpMOD_Opcode[i])
+			modCount++;
+		if (operation[i]==tmpLDA_Opcode[i])
+			ldaCount++;
+		if (operation[i]==tmpSTA_Opcode[i])
+			staCount++;
+		if (operation[i]==tmpMOV_Opcode[i])
+			movCount++;
+		if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+		if (operation[i]==tmpJGT_Opcode[i])
+			jgtCount++;
+		if (operation[i]==tmpJLT_Opcode[i])
+			jltCount++;
+		if (operation[i]==tmpJNE_Opcode[i])
+			jneCount++;
+		if (operation[i]==tmpJEQ_Opcode[i])
+			jeqCount++;
+		if (operation[i]==tmpDMP_Opcode[i])
+			dmpCount++;
+	}
+
+	//if ALU instruction = Operation, Operand1, Operand2, Operand3
+	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 ||
+		modCount==8 || ldaCount==8 || staCount==8 || movCount==8 ||
+		jgtCount==8 || jltCount==8 || jneCount==8 || jeqCount==8) {
+
+		operationType = 1; //Set to ALU Type Instruction
+
+		for (int i = 8; i < 32; i++) {
+			if (i >= 8 && i <= 15)
+				operand1[i-8] = currentInstruction[i];
+			if (i >= 16 && i <= 23)
+				operand2[i-16] = currentInstruction[i];
+			if (i >= 24 && i <= 31)
+				operand3[i-24] = currentInstruction[i];
+		}
+	}
+	/*
+	//MVI Instruction = Operation, Operand1, Operand2 (16-bit?)
+	else if (mviCount==8){
+		operationType = 2;
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i]; //Operand1 will have destination Register
+		}
+
+	}
+	//JMP Instruction = Operation, Operand1 (L1,L2,L3)
+	else if (jmpCount==8){
+		operationType = 3;
+		//Decode operand 1 to L1, L2, L3
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i]; //Operand1 will have L1, L2, L3
+		}
+		//startMemLocation = L1,L2,L3
+	}
+	//DMP Instruction = Operation
+	else if (dmpCount==8){
+		operationType = 4;
+	}
+	*/
 
 	//first 8 bits are always opcode
 	//next 24 bits are always registers
@@ -867,21 +1145,24 @@ void getCurrentInstruction(){
 	}
 	currentInstruction[33] = '\0';
 
-	startMemLocation += 4;
+	//startMemLocation += 4;
 
 }
 /*******************************************
  * This function changes the operation/opcode
  * into an integer value.
  *******************************************/
-void decodeInstructionOperationOperand(){
+void decodeALUInstructionOperands(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
-		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0;
+		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0,
+	    mviCount = 0, jmpCount = 0, jgtCount = 0, jltCount = 0,
+		jneCount = 0, jeqCount = 0, dmpCount = 0;
 
 	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
 		operand1R4Count = 0, operand1R5Count = 0, operand1R6Count = 0, operand1R7Count = 0,
 		operand1R8Count = 0, operand1R9Count = 0, operand1R10Count = 0, operand1R11Count = 0,
-		operand1R12Count = 0, operand1R13Count = 0, operand1R14Count = 0, operand1R15Count = 0;
+		operand1R12Count = 0, operand1R13Count = 0, operand1R14Count = 0, operand1R15Count = 0,
+		operand1L1Count = 0, operand1L2Count = 0, operand1L3Count = 0;
 
 	int operand2R0Count = 0, operand2R1Count = 0, operand2R2Count = 0, operand2R3Count = 0,
 		operand2R4Count = 0, operand2R5Count = 0, operand2R6Count = 0, operand2R7Count = 0,
@@ -891,14 +1172,18 @@ void decodeInstructionOperationOperand(){
 	int operand3R0Count = 0, operand3R1Count = 0, operand3R2Count = 0, operand3R3Count = 0,
 		operand3R4Count = 0, operand3R5Count = 0, operand3R6Count = 0, operand3R7Count = 0,
 		operand3R8Count = 0, operand3R9Count = 0, operand3R10Count = 0, operand3R11Count = 0,
-		operand3R12Count = 0, operand3R13Count = 0, operand3R14Count = 0, operand3R15Count = 0;
+		operand3R12Count = 0, operand3R13Count = 0, operand3R14Count = 0, operand3R15Count = 0,
+		operand3L1Count = 0, operand3L2Count = 0, operand3L3Count = 0;
 
 	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
 		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8],
 		 tmpR0_Opcode[8], tmpR1_Opcode[8], tmpR2_Opcode[8], tmpR3_Opcode[8],
 		 tmpR4_Opcode[8], tmpR5_Opcode[8], tmpR6_Opcode[8], tmpR7_Opcode[8],
 		 tmpR8_Opcode[8], tmpR9_Opcode[8], tmpR10_Opcode[8], tmpR11_Opcode[8],
-		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8];
+		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8],
+	     tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGT_Opcode[8], tmpJLT_Opcode[8],
+		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8],
+		 tmpL1_Opcode[8], tmpL2_Opcode[8], tmpL3_Opcode[8];
 
 	for (int i = 0; i< 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
@@ -909,6 +1194,14 @@ void decodeInstructionOperationOperand(){
 		tmpLDA_Opcode[i] = LDA_Opcode[i] ? '1' : '0';
 		tmpSTA_Opcode[i] = STA_Opcode[i] ? '1' : '0';
 		tmpMOV_Opcode[i] = MOV_Opcode[i] ? '1' : '0';
+		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		tmpJGT_Opcode[i] = JGT_Opcode[i] ? '1' : '0';
+		tmpJLT_Opcode[i] = JLT_Opcode[i] ? '1' : '0';
+		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
+		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
+		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
+
 		tmpR0_Opcode[i] = R0_Opcode[i] ? '1' : '0';
 		tmpR1_Opcode[i] = R1_Opcode[i] ? '1' : '0';
 		tmpR2_Opcode[i] = R2_Opcode[i] ? '1' : '0';
@@ -944,6 +1237,20 @@ void decodeInstructionOperationOperand(){
 			staCount++;
 		if (operation[i]==tmpMOV_Opcode[i])
 			movCount++;
+	    if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+		if (operation[i]==tmpJGT_Opcode[i])
+			jgtCount++;
+		if (operation[i]==tmpJLT_Opcode[i])
+			jltCount++;
+		if (operation[i]==tmpJNE_Opcode[i])
+			jneCount++;
+		if (operation[i]==tmpJEQ_Opcode[i])
+			jeqCount++;
+		if (operation[i]==tmpDMP_Opcode[i])
+			dmpCount++;
 
 		if (operand1[i]==tmpR0_Opcode[i])
 			operand1R0Count++;
@@ -977,6 +1284,12 @@ void decodeInstructionOperationOperand(){
 			operand1R14Count++;
 		if (operand1[i]==tmpR15_Opcode[i])
 			operand1R15Count++;
+		if (operand1[i]==tmpL1_Opcode[i])
+			operand1L1Count++;
+		if (operand1[i]==tmpL2_Opcode[i])
+			operand1L2Count++;
+		if (operand1[i]==tmpL3_Opcode[i])
+			operand1L3Count++;
 
 		if (operand2[i]==tmpR0_Opcode[i])
 			operand2R0Count++;
@@ -1043,6 +1356,12 @@ void decodeInstructionOperationOperand(){
 			operand3R14Count++;
 		if (operand3[i]==tmpR15_Opcode[i])
 			operand3R15Count++;
+	  	if (operand3[i]==tmpL1_Opcode[i])
+	  		operand3L1Count++;
+	  	if (operand3[i]==tmpL2_Opcode[i])
+	  		operand3L2Count++;
+	  	if (operand3[i]==tmpL3_Opcode[i])
+	  		operand3L3Count++;
 	}
 
 	if (addCount==8)
@@ -1061,6 +1380,20 @@ void decodeInstructionOperationOperand(){
 		instructionOperation=134;
 	else if (movCount==8)
 		instructionOperation=135;
+	else if (mviCount==8)
+		instructionOperation=136;
+	else if (jmpCount==8)
+		instructionOperation=137;
+	else if (jgtCount==8)
+		instructionOperation=138;
+	else if (jltCount==8)
+		instructionOperation=139;
+	else if (jneCount==8)
+		instructionOperation=140;
+	else if (jeqCount==8)
+		instructionOperation=141;
+	else if (dmpCount==8)
+		instructionOperation=142;
 
 	if (operand1R0Count==8)
 		instructionOperand1=0;
@@ -1094,6 +1427,12 @@ void decodeInstructionOperationOperand(){
 		instructionOperand1=14;
 	else if (operand1R15Count==8)
 		instructionOperand1=15;
+	else if (operand1L1Count==8)
+		instructionOperand1=L1;
+	else if (operand1L2Count==8)
+		instructionOperand1=L2;
+	else if (operand1L3Count==8)
+		instructionOperand1=L3;
 
 	if (operand2R0Count==8)
 		instructionOperand2=0;
@@ -1160,6 +1499,12 @@ void decodeInstructionOperationOperand(){
 		instructionOperand3=14;
 	else if (operand3R15Count==8)
 		instructionOperand3=15;
+	else if (operand3L1Count==8)
+		instructionOperand3=L1;
+	else if (operand3L2Count==8)
+		instructionOperand3=L2;
+	else if (operand3L3Count==8)
+		instructionOperand3=L3;
 
 	return;
 }
@@ -1169,20 +1514,18 @@ void decodeInstructionOperationOperand(){
  the appropriate function.
  *******************************************/
 void callAppropriateFunction(){
-	void (*add_ptr)(int,int,int) = &add; void (*sub_ptr)(int,int,int) = &sub; void (*mul_ptr)(int,int,int) = &mul; 
-	void (*div_ptr)(int,int,int) = &div; void (*mod_ptr)(int,int,int) = &mod; void (*mov_ptr)(int,int,int) = &mov;
 	if (instructionOperation==128){
-		(*add_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		add(instructionOperand1, instructionOperand2, instructionOperand3);
 		cout<<"add"<<endl;
 	}
 	else if (instructionOperation==129)
-		(*sub_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		sub(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
-		(*mul_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		mul(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==131)
-		(*div_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		div(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==132)
-		(*mod_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		mod(instructionOperand1, instructionOperand2, instructionOperand3);
 	/*
 	else if (instructionOperation==133)
 		lda();
@@ -1190,78 +1533,85 @@ void callAppropriateFunction(){
 		sta();
 	*/
 	else if (instructionOperation==135)
-		(*mov_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
-
+		mov(instructionOperand1, instructionOperand2, instructionOperand3);
+	/*
+	else if (instructionOperation==136)
+		mvi(instructionOperand1,);
+	else if (instructionOperation==137)
+		JMP(instructionOperand1);
+	else if (instructionOperation==138)
+		JGT(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==139)
+		JLT(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==140)
+		JNE(instructionOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==141)
+		JEQ(instrucitonOperand1, instructionOperand2, instructionOperand3);
+	else if (instructionOperation==142)
+		dmp();
+	 */
 	return;
 }
 
 /******************************************************************
- Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD
+ Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
-
+ 
 // Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is equal to content of register y then stores the array L content into program counter register 
-void JEQ(int x, int y, bool *L){ //Jump if equal 
+void JEQ(int x, int y, int L){ //Jump if equal 
 	
 	sub(0,x,y);
-	unsigned int n = convertBinaryTodecimal(R0,32);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if(n == 0){
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+		startMemLocation = L;
 	}
 }
 
 // Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is less than the content of register y then stores the array L content into program counter register 	
-void JIL(int x, int y, bool *L){ //Jump if less than
+void JLT(int x, int y, int L){ //Jump if less than
 	
 	sub(0,y,x);
-	unsigned int n = convertBinaryTodecimal(R0,32);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if((n > 0) && (overflowFlag==0)){
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+		startMemLocation = L;
 	}	
 }
 
 // Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is greater than the content of register y then stores the array L content into program counter register 
-void JIG(int x, int y, bool *L){ //Jump if greater than
+void JGT(int x, int y, int L){ //Jump if greater than
 
 	sub(0,x,y);
-	unsigned int n = convertBinaryTodecimal(R0,32);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if((n > 0) && (overflowFlag==0)){
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+		startMemLocation = L;
 	}
 }
 
 // Jump if not equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is greater than the content of register y then stores the array L content into program counter register
-void JNE(int x, int y, bool *L){ //Jump if not equal
+void JNE(int x, int y, int L){ //Jump if not equal
 
 	sub(0,x,y);
-	unsigned int n = convertBinaryTodecimal(R0,32);
-	if(n != 0) {
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
+	if(n != 0) { 
+		startMemLocation = L;
 	}
 }
 
 // Move function - Takes three register numbers as input (z,x,y) and moves content of 'x' register and to 'y' register
 void mov(int z, int x, int y){
 	bool tempR1[32], tempR2[32], tempA[32];
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
 
 	for(int i=0; i<32; i++){
 		tempR2[i] = tempR1[i];
 	}
 
-//function to decide which register is deffined by z
+//function to decide which register is defined by z
 	findDestinationRegister(z, tempR2);
 
 }
@@ -1269,22 +1619,18 @@ void mov(int z, int x, int y){
 // Modular function - Takes three register numbers as input (z,x,y) and take Modulos between 'x' register and 'y' register and stores the result in 'z' register
 void mod(int z, int x, int y){
 
-	int i=32, rim, q=0;
-	unsigned int divisor, dividend;
+	int i=32, rim, q=0, divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
 
-//	Initializing the flags
-	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
-	
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	function to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
-	dividend = convertBinaryTodecimal(tempR1,32);
+	dividend = convertBinaryToDecimal_N(tempR1,32);
 	int n = dividend;
-	divisor = convertBinaryTodecimal(tempR2,32);
+	divisor = convertBinaryToDecimal_N(tempR2,32);
 	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 
@@ -1302,8 +1648,6 @@ void mod(int z, int x, int y){
 	}
 
 //	Division loop
-	printf("\nIn the MOD function, the dividend = %u and divisor = %u\n",dividend,divisor);
-
 	carry=0; temp1=0; temp2=0; sum=0;
 	while(dividend >= divisor){
 
@@ -1322,42 +1666,35 @@ void mod(int z, int x, int y){
 			tempR1[k]=tempA2[k];
 		}
 
-		dividend = 	convertBinaryTodecimal(tempA2,32);
+		dividend = 	convertBinaryToDecimal_N(tempA2,32);
 
 	}
 
-	convertDecimalToBinary(dividend,finalResult);
+	convertDecimalToBinary_N(dividend,finalResult);
 
-//	function to decide which register is deffined by z
+//	function to decide which register is defined by z
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(dividend == 0) {
-		printf("\nThere is a zeroFlag after MOD operation !!!\n");
-		zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;
-	}
+	if(dividend == 0) {zeroFlag = 1; overflowFlag = 0; signFlag = 0; carryFlag = 0;}
 
 }
 
 // Divition function - Takes three register numbers as input (z,x,y) and divides 'x' register and 'y' register and stores the result in 'z' register
 void div(int z, int x, int y){
 
-	int i=32, rim, q=0; 
-	unsigned int divisor, dividend;
+	int i=32, rim, q=0, divisor, dividend;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32], tempA1[32], tempA2[32], finalResult[32];
-	
-//	Initializing the flags
-	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
-	dividend = convertBinaryTodecimal(tempR1,32);
+	dividend = convertBinaryToDecimal_N(tempR1,32);
 	int n = dividend;
-	divisor = convertBinaryTodecimal(tempR2,32);
+	divisor = convertBinaryToDecimal_N(tempR2,32);
 	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 
@@ -1375,10 +1712,9 @@ void div(int z, int x, int y){
 	}
 
 //	Division loop
-	printf("\nIn the DIV function, the dividend = %u and divisor = %u\n",dividend,divisor);
+	carry=0; temp1=0; temp2=0; sum=0;
+	while(dividend >= divisor){
 
-	for(carry=0, temp1=0, temp2=0, sum=0; dividend >= divisor; dividend = convertBinaryTodecimal(tempA2,32)) {
-		printf("\nIn DIV loop");
 		carry=0; temp1=0; temp2=0; sum=0;
 		for(int i=31; i>=0; i--){
 			sum = (tempR1[i] ^ tempA1[i]) ^ carry;
@@ -1394,19 +1730,16 @@ void div(int z, int x, int y){
 			tempR1[k]=tempA2[k];
 		}
 
-	}
-	
-	printf("\nAfter the DIV, the q = %d\n", q);
+		dividend = 	convertBinaryToDecimal_N(tempA2,32);
 
-	convertDecimalToBinary(q,finalResult);
-// function to decide which register is deffined by z
+	}
+
+	convertDecimalToBinary_N(q,finalResult);
+// function to decide which register is defined by z
 	findDestinationRegister(z, finalResult);
 
 //	Updating flags
-	if(q == 0) {
-		printf("\nThere is a zeroFlag after DIV operation !!!\n");
-		zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;
-	}
+	if(q == 0) {zeroFlag = 1; carryFlag = 0; overflowFlag = 0; signFlag = 0;}
 }
 
 // Multiply function - Takes three register numbers as input (z,x,y) and multiply 'x' register and 'y' register and stores the result in 'z' register
@@ -1415,22 +1748,19 @@ void mul(int z, int x, int y){
 	int i;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempR11[64], tempR22[64], tempA[32], tempAA[64];
-	
-//	Initializing the flags
-	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	function to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
-	unsigned int n = convertBinaryTodecimal(tempR2,32);
+	int n = convertBinaryToDecimal_N(tempR2,32);
 
 //	Debugging
-	unsigned int n1 = convertBinaryTodecimal(tempR1, 32);
-	unsigned int n2 = convertBinaryTodecimal(tempR2, 32);
+	int n1 = convertBinaryToDecimal_N(tempR1, 32);
+	int n2 = convertBinaryToDecimal_N(tempR2, 32);
 
-//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplicxation
+//	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplication
 	for(int i=0; i<64; i++){
 
 		if(i<=31){
@@ -1448,10 +1778,7 @@ void mul(int z, int x, int y){
 		tempAA[i]=tempR11[i];
 	}
 //	Multiplication logic
-
-	printf("\nIn the MUL function, the temmR1 = %u and tempR2 = %u\n",n1,n2);
-	
-	for(unsigned int j=1; j<n; j++){
+	for(int j=1; j<n; j++){
 		i = 64;
 		while(i>=0){
 			sum = (tempR11[i]^tempAA[i]) ^ carry;
@@ -1467,30 +1794,12 @@ void mul(int z, int x, int y){
 	for(int i=0; i<32; i++){
 		temp[i]=tempAA[i+32];
 	}
-
-// Handelling the situation if one of the input or both the input is zero 	
-	if(n1 == 0 || n2 == 0){
-		for( int i=0; i<32; i++){
-			temp[i] = 0;
-		}
-	}
-	
-	printf("\nAfter the MUL, the result = %u\n", convertBinaryTodecimal(temp, 32));
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, temp);
 
-// flag updateing
-	for(int i=0; i<32; i++) {
-		if(tempAA[i] == 1){ 
-			overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; 
-			printf("\nThere is a overflow after MUL operation !!!\n");
-			break;
-		} 
-	}
-	if(convertBinaryTodecimal(temp,32) == 0) {
-		printf("\nThere is a zeroFlag after MUL operation !!!\n"); 
-		zeroFlag = 1; overflowFlag = 0; carryFlag = 0; signFlag = 0;
-	}
+// flag updating
+	for(int i=0; i<32; i++) {if(tempAA[i] == 1){ overflowFlag = 1; carryFlag = 0; signFlag = 0; zeroFlag = 0; printf("There is a overflow after MUL operation !!!");break;} }
+	if(convertBinaryToDecimal_N(temp,32) == 0){ zeroFlag = 1;}
 }
 
 // Addition function - Takes three register numbers as input (z,x,y) and addition 'x' register and 'y' register and stores the result in 'z' register
@@ -1499,14 +1808,11 @@ void add(int z, int x, int y) {
 	int i = 31;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA[32];
-	
-//	Initializing the flags
-	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
 
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	while(i>=0){
@@ -1518,14 +1824,11 @@ void add(int z, int x, int y) {
 		i--;
 	}
 
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, tempA);
 
-// flag updateing
-	if(carry == 1){
-		carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; 
-		printf("\nThere is a overflow and carry after ADD operation !!!\n");
-	}
+// flag updating
+	if(carry == 1){carryFlag = 1; overflowFlag = 1; zeroFlag = 0; signFlag = 0; printf("There is a overflow and carry after ADD operation !!!");}
 }
 
 // Substract function - Takes three register numbers as input (z,x,y) and substract 'x' register and 'y' register and stores the result in 'z' register
@@ -1534,13 +1837,10 @@ void sub(int z, int x, int y){
 	int i = 31;
 	bool carry=0, temp1=0, temp2=0, sum=0;
 	bool tempR1[32], tempR2[32], tempA1[32], tempA2[32];
-	
-//	Initializing the flags
-	zeroFlag = 0; overflowFlag = 0; signFlag = 0; carryFlag = 0;
 
-//	function to decide which register is deffined by x
+//	function to decide which register is defined by x
 	findSourceRegister(x,tempR1);
-//	funtion to decide which register is deffined by y
+//	funtion to decide which register is defined by y
 	findSourceRegister(y,tempR2);
 
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
@@ -1567,17 +1867,15 @@ void sub(int z, int x, int y){
 		i--;
 	}
 
-// function to decide which register is deffined by z
+// function to decide which register is defined by z
 	findDestinationRegister(z, tempA2);
 
-// flag updateing
-	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
+// flag updating
+	if(convertBinaryToDecimal_N(tempR2,32) > convertBinaryToDecimal_N(tempR1,32)) {
 		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
-		printf("\nThere is a overflow and signFlag after SUB operation !!!\n");
+		printf("There is a overflow after SUB operation !!!");
 	}
-	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { 
-		zeroFlag = 1; signFlag = 0; overflowFlag = 0; carryFlag = 0;
-	}
+	if(convertBinaryToDecimal_N(tempR2,32) == convertBinaryToDecimal_N(tempR1,32)) { zeroFlag = 1; signFlag = 0; overflowFlag = 1; carryFlag = 0;}
 
 }
 
@@ -1587,7 +1885,7 @@ void sub(int z, int x, int y){
 
 // Converts hexadecimal input to binary
 
-void convertDecimalToBinary(int dec, bool *result){
+void convertDecimalToBinary_N(int dec, bool *result){
 
 	bool bit; bool temp[32];
 
@@ -1613,9 +1911,9 @@ void convertDecimalToBinary(int dec, bool *result){
 }
 
 
-// Converts dinary input to decimal
+// Converts binary input to decimal
 
-int convertBinaryTodecimal(bool *bits, int loc){
+int convertBinaryToDecimal_N(bool *bits, int loc){
 
 	int counter = 0;
 	int decimal = 0;
@@ -1635,7 +1933,7 @@ int convertBinaryTodecimal(bool *bits, int loc){
 
 void findSourceRegister(int x, bool *tempR1){
 
-//	Switch case to deside which register is deffined by x
+//	Switch case to deside which register is defined by x
 	switch(x){
 
 		case 0:
@@ -1742,7 +2040,7 @@ void findSourceRegister(int x, bool *tempR1){
 
 void findDestinationRegister(int z, bool *tempA){
 
-//	Switch case to deside which register is deffined by z
+//	Switch case to deside which register is defined by z
 	switch(z){
 
 		case 0:
