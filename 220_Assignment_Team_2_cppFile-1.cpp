@@ -8,7 +8,6 @@
 # include <unistd.h>
 # include <iostream>
 # include <fstream>
-# include <cstdlib>
 
 using namespace std;
 
@@ -63,48 +62,33 @@ bool MOV_Opcode [8] = {1,0,0,0,0,1,1,1}; //135
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
-bool R1 [32] = {1,1,1,0,1,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1}; //1
-bool R2 [32] = {1,1,1,1,0,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1}; //2
+bool R1 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,1}; //1
+bool R2 [32] = {0,0,0,0,0,0,0,0,
+		        0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,1,0}; //2
 bool R3 [32] = {0,0,0,0,0,0,0,0,
 			    0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,1,1,1}; //3
+				0,0,0,0,0,0,1,1}; //3
 bool R4 [32] = {0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,1,0,0}; //4
-bool R5 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0}; //5
-bool R6 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0}; //6
-bool R7 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,1,1,0,0}; //0xC
+				0,0,0,0,0,0,0,1}; //4
+bool R5 [32];
+bool R6 [32];
+bool R7 [32];
 bool R8 [32];
 bool R9 [32];
-bool R10 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,1,1,0,0}; //0xC
-bool R11 [32] = {0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,
-				0,0,0,0,0,1,0,0}; //4
+bool R10 [32];
+bool R11 [32];
 bool R12 [32];
 bool R13 [32];
-bool R14 [32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-bool R15 [32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1};
+bool R14 [32];
+bool R15 [32];
 
 //Variables needed in program
 char checkOperend[9];
@@ -133,33 +117,23 @@ void parseInstructionFromMemory();
 void getCurrentInstruction();
 void decodeInstructionOperationOperand();
 void callAppropriateFunction();
-//void add(int z, int x, int y);
-//void sub(int z, int x, int y);
-//void mul(int z, int x, int y);
-//void div(int z, int x, int y);
-//void findSourceRegister(int x, bool *tempR1);
-//void findDestinationRegister(int x, bool *tempR2);
-//int convertBinaryTodecimal(bool *bits, int);
-//void convertDecimalToBinary(int dec, bool *result);
-int MemoryAddressing(int imm, int rdx, int rcx, int S);
-int StringMemoryAddressing(string str);
-int StringRegistersToInt(string strNew);
 
 // Function declaration for ALU operation
 void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
-int convertBinaryTodecimal(bool *bits, int);
-void convertDecimalToBinary(int dec, bool *result);
+int convertBinaryToDecimal_N(bool *bits, int);
+void convertDecimalToBinary_N(int dec, bool *result);
 void add(int z, int x, int y);
 void sub(int z, int x, int y);
 void mul(int z, int x, int y);
 void div(int z, int x, int y);
 void mod(int z, int x, int y);
 void mov(int z, int x, int y);
-void JEQ(int x, int y, bool *L); //Jump if equal 
-void JLT(int x, int y, bool *L); //Jump if less than
-void JGT(int x, int y, bool *L); //Jump if greater than 
-void JNE(int x, int y, bool *L); //Jump if not equal
+void JEQ(int x, int y, int L); //Jump if equal 
+void JLT(int x, int y, int L); //Jump if less than
+void JGT(int x, int y, int L); //Jump if greater than 
+void JNE(int x, int y, int L); //Jump if not equal
+
 
 int main(){
 
@@ -172,31 +146,26 @@ int main(){
 
 	readFromFile(fileName);
 
-	printf("\n***************************************** Memory Dump Number 0 *******************************************\n");
 	memoryDump();
 
 	//Start Program
 	cout<<"Starting Program"<<endl;
-	startMemLocation=1024; int count = 1;
+	startMemLocation=1024;
 	while (exitCodeCount != 8){
 		getCurrentInstruction();
 		parseInstructionFromMemory();
 		if (exitCodeCount != 8){
 			decodeInstructionOperationOperand();
 			callAppropriateFunction();
-			printf("\n***************************************** Memory Dump Number %d *******************************************\n", count);
-			memoryDump();
-			count++;
 		}
 	}
 
-	printf("\n\n\nExit Code found: ");
 	for (int i = 0; i < 32; i++){
 		printf("%c", currentInstruction[i]);
 	}
-	printf("\n***************************************** Program End !!! *******************************************\n");
+	cout<<"Program Finished"<<endl;
 
-	//memoryDump();
+	memoryDump();
 }
 
 void LDA (int finalMemoryLocation) {
@@ -243,16 +212,11 @@ void memoryDump() {
 
 	int i = 0;
 
-	/*
 	printf("\n Flag Register: ");
 
 	for(int j=0;j<8;j++){
 		printf("%d",flags[j]);
 	}
-	*/
-
-	printf("\n Flags: \n overflowFlag = %d, signFlag = %d, zeroFlag = %d, carryFlag = %d \n",
-			overflowFlag, signFlag, zeroFlag, carryFlag);
 
 	printf("\n\nSpecial Purpose registers: ");
 	printf("\n Accumulator Register: ");
@@ -397,13 +361,11 @@ void memoryDump() {
 	vOut[32] = '\0';
 	printf("%X",convertBinaryToDecimal(vOut));
 
-
 	//Memory dump
-/*
-	cout<<endl<<endl;	
+	cout<<endl<<endl;
 	printf("Memory: HEX: DEC\n");
-	//for(int i = 1024; i<=2055; i++) {
-	for (int i = 1024; i <= 1104; i++) { //Memory Range of 1024 - 4096
+
+	for(int i = 1024; i<=2055; i++) {
 		printf(" Memory Location: %X: ",i);
 		char vOut[9];
 		for(int j=0;j<8;j++){
@@ -416,7 +378,6 @@ void memoryDump() {
 			printf("\n");
 
 	}
-*/
 
 	return;
 }
@@ -455,40 +416,13 @@ void decodeInstructionFromFile(string textLine){
 
 	pch = strtok((char*)textLine.c_str()," ,\r");
 
-	while (pch != NULL)
-	{
-		if(strcmp(pch,"MFA")==0){
-			cout<<"IN MFA"<<endl;
-			pch = strtok (NULL, " ");
-			//Call Nishants Function with pch
-			int memaddr = StringMemoryAddressing(pch);
-			cout << "MemoryAddressing = " << memaddr << endl;
-			cout<<"THE PCH TO PASS: "<<pch<<endl;
-			//mov from MemoryAddressing to Accumulator
-			STA(memaddr);
-			cout << "updated accumulator" << endl;
-			pch = strtok (NULL, " ,\r");
-		}else
-			if(strcmp(pch,"MTA")==0){
-				cout<<"IN MTA"<<endl;
-				pch = strtok (NULL, " ");
-				//Call Nishants Function with pch
-				int memaddr = StringMemoryAddressing(pch);
-				cout << "MemoryAddressing = " << memaddr << endl;
-				cout<<"THE PCH TO PASS: "<<pch<<endl;
-				//mov from Accumulator to MemoryAddressing
-				LDA(memaddr);
-				cout << "updated MemoryAddress" << endl;
-				pch = strtok (NULL, " ,\r");
-			}else{
-				cout<<"IN ELSE"<<endl;
-				instructionIntoMemory(pch,startMemLocation);
-				startMemLocation++;
-				pch = strtok (NULL, " ,\r");
-			}
+	while (pch != NULL){
+		instructionIntoMemory(pch,startMemLocation);
+		startMemLocation++;
+		pch = strtok (NULL, " ,\r");
 	}
 
-	return ;
+	return;
 }
 
 //Converts operand into bits and stores into memory.
@@ -520,18 +454,6 @@ void instructionIntoMemory(char* token,int memLocation) {
 						memory[memLocation][i] = DIV_Opcode[i];
 					}
 				}else
-					if(strcmp(token,"MOD")==0){
-						cout<<"IN MOD"<<endl;
-						for (int i = 0; i < 8; i++){
-							memory[memLocation][i] = MOD_Opcode[i];
-						}
-					}else
-						if(strcmp(token,"MOV")==0){
-							cout<<"IN MOV"<<endl;
-							for (int i = 0; i < 8; i++){
-								memory[memLocation][i] = MOV_Opcode[i];
-							}
-						}else
 					if(strcmp(token,"R0")==0){
 						cout<<"IN R0"<<endl;
 						for (int i = 0; i < 8; i++){
@@ -637,138 +559,6 @@ void instructionIntoMemory(char* token,int memLocation) {
 																						}
 																					}
 }
-/****************************************
- * MemoryAddressing
- */
-int MemoryAddressing(int imm=0, int rdx=0, int rcx=0, int S=1){
-	int address;
-	address  = imm + rdx + rcx*S;
-	return address;
-}
-/*************************************************************
- *
- *************************************************************/
-int StringMemoryAddressing(string str){
-	unsigned first = 0;
-	unsigned last = str.find('(');
-	string strNew = str.substr (first,last-first);
-	long int int_value1 = std::strtol(strNew.c_str(), 0, 16);
-
-	first = str.find('(');
-	last = str.find(',');
-	strNew = str.substr (first+1,last-first-1);
-	//long int int_value2 = std::strtol(strNew.c_str(), 0, 16);
-	//cout << strNew << endl;
-	int int_value2 = StringRegistersToInt(strNew);
-	//cout << "int_value2=" << int_value2 << endl;
-
-	first = str.find(',',last);
-	last = str.find(',',last+1);
-	strNew = str.substr (first+1,last-first-1);
-	//long int int_value3 = std::strtol(strNew.c_str(), 0, 16);
-	//cout << strNew << endl;
-	int int_value3 = StringRegistersToInt(strNew);
-	//cout << "int_value3=" << int_value3 << endl;
-
-	first = str.find(',',last);
-	last = str.find(')',last+1);
-	strNew = str.substr (first+1,last-first-1);
-	long int int_value4 = std::strtol(strNew.c_str(), 0, 10);
-
-	int addr = MemoryAddressing(int_value1,int_value2,int_value3,int_value4);
-	return addr;
-	//return 0;
-}
-/*************************************************************
- *
- *************************************************************/
-int StringRegistersToInt(string strNew){
-	char vOut[33];
-	if(strcmp(strNew.c_str(),"R0")==0){
-		for(int i = 0; i < 32; i++){
-			vOut[i] = R0[i] ? '1' : '0';
-		}
-	}
-	if(strcmp(strNew.c_str(),"R1")==0){
-		for(int i = 0; i < 32; i++){
-			vOut[i] = R1[i] ? '1' : '0';
-		}
-	}
-	if(strcmp(strNew.c_str(),"R2")==0){
-		for(int i = 0; i < 32; i++){
-			vOut[i] = R2[i] ? '1' : '0';
-		}
-	}
-	if(strcmp(strNew.c_str(),"R3")==0){
-		for(int i = 0; i < 32; i++){
-			vOut[i] = R3[i] ? '1' : '0';
-		}
-	}
-	if(strcmp(strNew.c_str(),"R4")==0){
-		for(int i = 0; i < 32; i++){
-			vOut[i] = R4[i] ? '1' : '0';
-		}
-	}
-	if(strcmp(strNew.c_str(),"R5")==0){
-		for(int i = 0; i < 32; i++){
-			vOut[i] = R5[i] ? '1' : '0';
-		}
-	}
-	if(strcmp(strNew.c_str(),"R6")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R6[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R7")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R7[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R8")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R8[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R9")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R9[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R10")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R10[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R11")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R11[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R12")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R12[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R13")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R13[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R14")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R14[i] ? '1' : '0';
-			}
-		}
-	if(strcmp(strNew.c_str(),"R15")==0){
-			for(int i = 0; i < 32; i++){
-				vOut[i] = R15[i] ? '1' : '0';
-			}
-		}
-
-	int ret = strtol(vOut, NULL, 2);
-	return ret;
-}
-
 /*************************************************************/
 // This function reads an byte of memory and decodes it into
 // its appropriate instruction/operand.
@@ -1163,37 +953,34 @@ void decodeInstructionOperationOperand(){
 
 	return;
 }
-
 /*******************************************
  This function decodes operations and  calls
  the appropriate function.
  *******************************************/
 void callAppropriateFunction(){
-	void (*add_ptr)(int,int,int) = &add; void (*sub_ptr)(int,int,int) = &sub; void (*mul_ptr)(int,int,int) = &mul; 
-	void (*div_ptr)(int,int,int) = &div; void (*mod_ptr)(int,int,int) = &mod; void (*mov_ptr)(int,int,int) = &mov;
 	if (instructionOperation==128){
-		(*add_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		add(instructionOperand1, instructionOperand2, instructionOperand3);
 		cout<<"add"<<endl;
 	}
 	else if (instructionOperation==129)
-		(*sub_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		sub(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==130)
-		(*mul_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		mul(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==131)
-		(*div_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
+		div(instructionOperand1, instructionOperand2, instructionOperand3);
+/*
 	else if (instructionOperation==132)
-		(*mod_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
-	/*
+		mod(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==133)
 		lda();
 	else if (instructionOperation==134)
 		sta();
-	*/
 	else if (instructionOperation==135)
-		(*mov_ptr)(instructionOperand1, instructionOperand2, instructionOperand3);
-
+		mov();
+*/
 	return;
 }
+
 
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD
@@ -1201,53 +988,45 @@ void callAppropriateFunction(){
 
 // Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is equal to content of register y then stores the array L content into program counter register 
-void JEQ(int x, int y, bool *L){ //Jump if equal 
+void JEQ(int x, int y, int L){ //Jump if equal 
 	
 	sub(0,x,y);
-	unsigned int n = convertBinaryTodecimal(R0,32);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if(n == 0){
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+		startMemLocation = L;
 	}
 }
 
 // Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is less than the content of register y then stores the array L content into program counter register 	
-void JLT(int x, int y, bool *L){ //Jump if less than
+void JLT(int x, int y, int L){ //Jump if less than
 	
 	sub(0,y,x);
-	unsigned int n = convertBinaryTodecimal(R0,32);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if((n > 0) && (overflowFlag==0)){
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+		startMemLocation = L;
 	}	
 }
 
 // Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is greater than the content of register y then stores the array L content into program counter register 
-void JGT(int x, int y, bool *L){ //Jump if greater than
+void JGT(int x, int y, int L){ //Jump if greater than
 
 	sub(0,x,y);
-	unsigned int n = convertBinaryTodecimal(R0,32);
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if((n > 0) && (overflowFlag==0)){
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+		startMemLocation = L;
 	}
 }
 
 // Jump if not equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
 // If content of register x is greater than the content of register y then stores the array L content into program counter register
-void JNE(int x, int y, bool *L){ //Jump if not equal
+void JNE(int x, int y, int L){ //Jump if not equal
 
 	sub(0,x,y);
-	unsigned int n = convertBinaryTodecimal(R0,32);
-	if(n != 0) {
-		for(int i=0; i<32; i++){
-			programCounterRegister[i] = L[i];
-		} 
+	unsigned int n = convertBinaryToDecimal_N(R0,32);
+	if(n != 0) { 
+		startMemLocation = L;
 	}
 }
 
@@ -1263,7 +1042,6 @@ void mov(int z, int x, int y){
 
 //function to decide which register is deffined by z
 	findDestinationRegister(z, tempR2);
-
 }
 
 // Modular function - Takes three register numbers as input (z,x,y) and take Modulos between 'x' register and 'y' register and stores the result in 'z' register
@@ -1282,9 +1060,9 @@ void mod(int z, int x, int y){
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
 
-	dividend = convertBinaryTodecimal(tempR1,32);
+	dividend = convertBinaryToDecimal_N(tempR1,32);
 	int n = dividend;
-	divisor = convertBinaryTodecimal(tempR2,32);
+	divisor = convertBinaryToDecimal_N(tempR2,32);
 	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 
@@ -1322,11 +1100,11 @@ void mod(int z, int x, int y){
 			tempR1[k]=tempA2[k];
 		}
 
-		dividend = 	convertBinaryTodecimal(tempA2,32);
+		dividend = 	convertBinaryToDecimal_N(tempA2,32);
 
 	}
 
-	convertDecimalToBinary(dividend,finalResult);
+	convertDecimalToBinary_N(dividend,finalResult);
 
 //	function to decide which register is deffined by z
 	findDestinationRegister(z, finalResult);
@@ -1355,9 +1133,9 @@ void div(int z, int x, int y){
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
 
-	dividend = convertBinaryTodecimal(tempR1,32);
+	dividend = convertBinaryToDecimal_N(tempR1,32);
 	int n = dividend;
-	divisor = convertBinaryTodecimal(tempR2,32);
+	divisor = convertBinaryToDecimal_N(tempR2,32);
 	int m = divisor;
 	bool tempRX[32], tempRY[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
 
@@ -1377,7 +1155,7 @@ void div(int z, int x, int y){
 //	Division loop
 	printf("\nIn the DIV function, the dividend = %u and divisor = %u\n",dividend,divisor);
 
-	for(carry=0, temp1=0, temp2=0, sum=0; dividend >= divisor; dividend = convertBinaryTodecimal(tempA2,32)) {
+	for(carry=0, temp1=0, temp2=0, sum=0; dividend >= divisor; dividend = convertBinaryToDecimal_N(tempA2,32)) {
 		printf("\nIn DIV loop");
 		carry=0; temp1=0; temp2=0; sum=0;
 		for(int i=31; i>=0; i--){
@@ -1398,7 +1176,7 @@ void div(int z, int x, int y){
 	
 	printf("\nAfter the DIV, the q = %d\n", q);
 
-	convertDecimalToBinary(q,finalResult);
+	convertDecimalToBinary_N(q,finalResult);
 // function to decide which register is deffined by z
 	findDestinationRegister(z, finalResult);
 
@@ -1424,11 +1202,11 @@ void mul(int z, int x, int y){
 //	funtion to decide which register is deffined by y
 	findSourceRegister(y,tempR2);
 
-	unsigned int n = convertBinaryTodecimal(tempR2,32);
+	unsigned int n = convertBinaryToDecimal_N(tempR2,32);
 
 //	Debugging
-	unsigned int n1 = convertBinaryTodecimal(tempR1, 32);
-	unsigned int n2 = convertBinaryTodecimal(tempR2, 32);
+	unsigned int n1 = convertBinaryToDecimal_N(tempR1, 32);
+	unsigned int n2 = convertBinaryToDecimal_N(tempR2, 32);
 
 //	Assigning 32 array to 64 bit array by padding 0 at the 32 MSBs for multiplicxation
 	for(int i=0; i<64; i++){
@@ -1475,7 +1253,7 @@ void mul(int z, int x, int y){
 		}
 	}
 	
-	printf("\nAfter the MUL, the result = %u\n", convertBinaryTodecimal(temp, 32));
+	printf("\nAfter the MUL, the result = %u\n", convertBinaryToDecimal_N(temp, 32));
 // function to decide which register is deffined by z
 	findDestinationRegister(z, temp);
 
@@ -1487,7 +1265,7 @@ void mul(int z, int x, int y){
 			break;
 		} 
 	}
-	if(convertBinaryTodecimal(temp,32) == 0) {
+	if(convertBinaryToDecimal_N(temp,32) == 0) {
 		printf("\nThere is a zeroFlag after MUL operation !!!\n"); 
 		zeroFlag = 1; overflowFlag = 0; carryFlag = 0; signFlag = 0;
 	}
@@ -1571,11 +1349,11 @@ void sub(int z, int x, int y){
 	findDestinationRegister(z, tempA2);
 
 // flag updateing
-	if(convertBinaryTodecimal(tempR2,32) > convertBinaryTodecimal(tempR1,32)) {
+	if(convertBinaryToDecimal_N(tempR2,32) > convertBinaryToDecimal_N(tempR1,32)) {
 		signFlag = 1; overflowFlag = 1; carryFlag = 0; zeroFlag = 0;
 		printf("\nThere is a overflow and signFlag after SUB operation !!!\n");
 	}
-	if(convertBinaryTodecimal(tempR2,32) == convertBinaryTodecimal(tempR1,32)) { 
+	if(convertBinaryToDecimal_N(tempR2,32) == convertBinaryToDecimal_N(tempR1,32)) { 
 		zeroFlag = 1; signFlag = 0; overflowFlag = 0; carryFlag = 0;
 	}
 
@@ -1587,7 +1365,7 @@ void sub(int z, int x, int y){
 
 // Converts hexadecimal input to binary
 
-void convertDecimalToBinary(int dec, bool *result){
+void convertDecimalToBinary_N(int dec, bool *result){
 
 	bool bit; bool temp[32];
 
@@ -1613,9 +1391,9 @@ void convertDecimalToBinary(int dec, bool *result){
 }
 
 
-// Converts dinary input to decimal
+// Converts binary input to decimal
 
-int convertBinaryTodecimal(bool *bits, int loc){
+int convertBinaryToDecimal_N(bool *bits, int loc){
 
 	int counter = 0;
 	int decimal = 0;
