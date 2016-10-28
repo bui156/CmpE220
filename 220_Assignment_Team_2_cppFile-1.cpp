@@ -169,6 +169,7 @@ void JEQ(int x, int y, int L); //Jump if equal
 void JLT(int x, int y, int L); //Jump if less than
 void JGT(int x, int y, int L); //Jump if greater than 
 void JNE(int x, int y, int L); //Jump if not equal
+int storeArray();
 
 int main(){
 
@@ -212,6 +213,7 @@ int main(){
 	}
 	cout<<"Program Finished"<<endl;
 
+	//int xxx = storeArray();
 	memoryDump();
 
 	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3;
@@ -504,6 +506,7 @@ void memoryDump() {
 
 	//for(int i = 1024; i<=2055; i++) {
 	//for (int i = 1024; i <= 4096; i++) { //Memory Range of 1024 - 4096
+	int count=0;
 	for (int i = 1024; i <=1104; i++) {
 		printf(" Memory Location: %d: ",i);
 		char vOut[9];
@@ -511,9 +514,9 @@ void memoryDump() {
 			vOut[j] = memory[i][j] ? '1' : '0';
 		}
 		vOut[8] = '\0';
-		printf("%d\t\t\t",convertBinaryToDecimal(vOut));
+		printf("%d\t",convertBinaryToDecimal(vOut));
 
-		if (i%2 != 0)
+		if ((i+1)%4 == 0)
 			printf("\n");
 	}
 
@@ -1508,6 +1511,48 @@ void decodeALUInstructionOperands(){
 
 	return;
 }
+
+
+/******************************************************************
+ Function to take the array to be searched by the user and save it 
+ to the data memory
+ ******************************************************************/
+ 
+ int storeArray(){
+ 	int n, tempInt, initDataMemLoc = 2048, count=0, temp =-1;
+ 	bool R[32];
+ 	printf("Please enter the number of elements to be inside the array: "); scanf("%d", &n);
+ 	printf("Please start entering the numbers in assending order: \n");
+ 	for(int i=0; i<n; i++){
+ 		
+		 while(true){
+ 			printf("Enter the element number %d: ", count);
+ 			scanf("%d", &tempInt);
+ 			if(tempInt<=temp){
+ 				printf("Wront input!!! please enter another number\n");
+ 				continue;
+ 			}
+ 			else
+				break;
+ 		}
+ 		temp = tempInt;
+ 		count++;
+ 		
+ 		convertDecimalToBinary_N(tempInt,R);
+ 		for(int j=0; j<32; j++){
+ 			if(j>=0 && j<=7)
+ 				memory[initDataMemLoc][j] = R[j];
+ 			if(j>=8 && j<=15)
+ 				memory[initDataMemLoc+1][j-8] = R[j];
+ 			if(j>=16 && j<=23)
+ 				memory[initDataMemLoc+2][j-16] = R[j];
+			if(j>=24 && j<=31)
+				memory[initDataMemLoc+1][j-8] = R[j];
+		}
+		initDataMemLoc += 4;
+	}
+	return n;
+ }
 
 /*******************************************
  This function decodes operations and  calls
