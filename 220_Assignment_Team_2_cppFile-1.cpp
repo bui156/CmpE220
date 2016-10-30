@@ -36,6 +36,7 @@ int startMemLocation = 1024;
 int L1 = 0;
 int L2 = 0;
 int L3 = 0;
+//operationType will be the "opcode" of the operation to be taken.
 int operationType = 0;
 
 //Opcodes for Registers
@@ -96,9 +97,18 @@ bool R4 [32] = {0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,0,0,0,
 				0,0,0,0,0,1,0,0}; //4
-bool R5 [32];
-bool R6 [32];
-bool R7 [32];
+bool R5 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,1,0,1}; //5
+bool R6 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,1,1,0}; //6
+bool R7 [32] = {0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,
+				0,0,0,0,0,1,1,1}; //7
 bool R8 [32];
 bool R9 [32];
 bool R10 [32];
@@ -116,6 +126,7 @@ bool JMP_flag = false;
 char checkOperend[9];
 char checkCommand[5];
 char inputString[100];
+//Instruction Fetch and Decode
 char currentInstruction[33]; //will be string?
 char operation[8];
 char operand1[8];
@@ -132,15 +143,20 @@ void LDA(int); //This function will copy the contents of 4 consecutive bytes sta
 void STA(int); //This function will copy the contents of accumulator into 4 consecutive bytes starting from the specified byte address
 void validDataMemoryAddressCheck(int memoryLocation);
 void memoryDump();
+//Reading input from file and storing into instruction memory.
 void readFromFile(string fileName);
 void decodeInstructionFromFile(string textLine);
 void instructionIntoMemory(char* token,int memLocation);
 int convertBinaryToDecimal(char* bits);
 string convertDecimalToBinary(int n);
 ////////////////////////////////////////////////
+//Instruction Fetch and Decode
 void parseInstructionFromMemory();
 void getCurrentInstruction();
 void decodeALUInstructionOperands();
+void decodeMVIInstructionOperand();
+void decodeJMPInstructionOperand();
+void decodeDMPInstructionOperand();
 void callAppropriateFunction();
 //void add(int z, int x, int y);
 //void sub(int z, int x, int y);
@@ -159,16 +175,18 @@ void findSourceRegister(int x, bool *tempR1);
 void findDestinationRegister(int x, bool *tempR2);
 int convertBinaryToDecimal_N(bool *bits, int);
 void convertDecimalToBinary_N(int dec, bool *result);
-void add(int z, int x, int y);
-void sub(int z, int x, int y);
-void mul(int z, int x, int y);
-void div(int z, int x, int y);
-void mod(int z, int x, int y);
+void add(int z, int x, int y); //add: x + y = z
+void sub(int z, int x, int y); //sub: x - y = z
+void mul(int z, int x, int y); //mul: x * y = z
+void div(int z, int x, int y); //div: x / y = z
+void mod(int z, int x, int y); //mod: x % y = z
 void mov(int z, int x, int y);
-void JEQ(int x, int y, int L); //Jump if equal 
+void JEQ(int x, int y, int L); //Jump if equal
 void JLT(int x, int y, int L); //Jump if less than
-void JGT(int x, int y, int L); //Jump if greater than 
+void JGT(int x, int y, int L); //Jump if greater than
 void JNE(int x, int y, int L); //Jump if not equal
+
+void JMP(int L); //Jump to Label
 
 int main(){
 
@@ -183,9 +201,8 @@ int main(){
 
 	memoryDump();
 
-	/*
 	//Start Program
-	cout<<"Starting Program"<<endl;
+	cout << "Starting Program" << endl;
 	startMemLocation=1024;
 	while (exitCodeCount != 8){
 		operationType = 0;
@@ -196,16 +213,20 @@ int main(){
 				decodeALUInstructionOperands();
 				startMemLocation += 4;
 			}
-			else if (operationType == 2) //MVI Instruction
-				;	//decodeMVIInstructionOperand();
-			else if (operationType == 3) //JMP Instruction
-				;	//decodeJMPInstructionOperand();
-			else if (operationType == 4) //DMP Instruction
-				;	//decodeDMPInstructionOperand();
+			else if (operationType == 2) { //MVI Instruction
+				decodeMVIInstructionOperand();
+				startMemLocation += 4;
+			}
+			else if (operationType == 3) { //JMP Instruction
+				decodeJMPInstructionOperand();
+			}
+			else if (operationType == 4) { //DMP Instruction
+				decodeDMPInstructionOperand();
+				startMemLocation += 4;
+			}
 			callAppropriateFunction();
 		}
 	}
-	*/
 
 	for (int i = 0; i < 32; i++){
 		printf("%c", currentInstruction[i]);
@@ -214,8 +235,9 @@ int main(){
 
 	memoryDump();
 
-	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3;
+	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3 << endl;
 
+	cout << "FINISHED" << endl;
 }
 
 
@@ -517,6 +539,8 @@ void memoryDump() {
 			printf("\n");
 	}
 
+	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3;
+
 	return;
 }
 
@@ -797,6 +821,11 @@ void instructionIntoMemory(char* token,int memLocation) {
                                                                                                                             memory[memLocation][i] = R15_Opcode[i];
                                                                                                                         }
                                                                                                                     }else
+                                                                                                                    if(strcmp(token,"EXIT")==0){
+                                                                                                                    	cout<<"EXIT"<<endl;
+                                                                                                                    	for (int i = 0; i < 8; i++)
+                                                                                                                    		memory[memLocation][i] = exit_Opcode[i];
+                                                                                                                    }else
                                                                                                                         if(MVI_flag){
                                                                                                                             cout<<token<<endl;
                                                                                                                             string num = convertDecimalToBinary(atoi(token));
@@ -962,6 +991,7 @@ void parseInstructionFromMemory(){
 		 tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGT_Opcode[8], tmpJLT_Opcode[8],
 		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
 
+	//Convert Opcodes stored as Boolean array into Array of Chars.
 	for (int i = 0; i < 8; i++){
 		tmpADD_Opcode[i] = ADD_Opcode[i] ? '1' : '0';
 		tmpSUB_Opcode[i] = SUB_Opcode[i] ? '1' : '0';
@@ -1018,7 +1048,7 @@ void parseInstructionFromMemory(){
 			dmpCount++;
 	}
 
-	//if ALU instruction = Operation, Operand1, Operand2, Operand3
+	//if ALU instruction, Format = Operation, Operand1, Operand2, Operand3
 	if (addCount==8 || subCount==8 || mulCount==8 || divCount==8 ||
 		modCount==8 || ldaCount==8 || staCount==8 || movCount==8 ||
 		jgtCount==8 || jltCount==8 || jneCount==8 || jeqCount==8) {
@@ -1034,41 +1064,32 @@ void parseInstructionFromMemory(){
 				operand3[i-24] = currentInstruction[i];
 		}
 	}
-	/*
-	//MVI Instruction = Operation, Operand1, Operand2 (16-bit?)
+	//MVI Instruction = Operation, Operand1 (8-bit)
 	else if (mviCount==8){
-		operationType = 2;
-		for (int i = 8; i < 16; i++) {
-			operand1[i-8] = currentInstruction[i]; //Operand1 will have destination Register
-		}
 
+		operationType = 2; //Set to MVI Type Instruction
+
+		for (int i = 8; i < 23; i++) {
+			if (i >= 8 && i <=15)
+				operand1[i-8] = currentInstruction[i]; //Operand1 will have destination Register
+			if (i >= 16 && i <= 23)
+				operand2[i-16] = currentInstruction[i]; //Operand2 will have 8-bit immediate value. This will be an array of chars.
+		}
 	}
 	//JMP Instruction = Operation, Operand1 (L1,L2,L3)
 	else if (jmpCount==8){
-		operationType = 3;
-		//Decode operand 1 to L1, L2, L3
+
+		operationType = 3; //Set to JMP Instruction
+
 		for (int i = 8; i < 16; i++) {
 			operand1[i-8] = currentInstruction[i]; //Operand1 will have L1, L2, L3
 		}
-		//startMemLocation = L1,L2,L3
 	}
 	//DMP Instruction = Operation
 	else if (dmpCount==8){
-		operationType = 4;
-	}
-	*/
 
-	//first 8 bits are always opcode
-	//next 24 bits are always registers
-	for (int i = 0; i < 32; i++){
-		if (i >= 0 && i <= 7)
-			operation[i] = currentInstruction[i];
-		if (i >= 8 && i <= 15)
-			operand1[i-8] = currentInstruction[i];
-		if (i >= 16 && i <= 23)
-			operand2[i-16] = currentInstruction[i];
-		if (i >= 24 && i <= 31)
-			operand3[i-24] = currentInstruction[i];
+		operationType = 4; //Set to DMP Instruction
+
 	}
 
 	exitCodeCount = 0; //Reset Exit Code Count in case it was incremented by other codes matching "part" of the exit code.
@@ -1078,12 +1099,9 @@ void parseInstructionFromMemory(){
 			exitCodeCount++;
 	}
 
-	/*
-	operation[9] = '\0';
-	operand1[9] = '\0';
-	operand2[9] = '\0';
-	operand3[9] = '\0';
-	 */
+	if (exitCodeCount==8)
+		operationType=10101010;
+
 	return;
 }
 
@@ -1218,6 +1236,9 @@ void decodeALUInstructionOperands(){
 		tmpR13_Opcode[i] = R13_Opcode[i] ? '1' : '0';
 		tmpR14_Opcode[i] = R14_Opcode[i] ? '1' : '0';
 		tmpR15_Opcode[i] = R15_Opcode[i] ? '1' : '0';
+		tmpL1_Opcode[i] = L1_Opcode[i] ? '1' : '0';
+		tmpL2_Opcode[i] = L2_Opcode[i] ? '1' : '0';
+		tmpL3_Opcode[i] = L3_Opcode[i] ? '1' : '0';
 	}
 
 	for (int i = 0; i < 8; i++){
@@ -1510,6 +1531,70 @@ void decodeALUInstructionOperands(){
 }
 
 /*******************************************
+ * This function decodes the MVI Instruction
+ * and its operands.
+ * Input:
+ * Output:
+ */
+void decodeMVIInstructionOperand(){
+
+}
+/*******************************************
+ * This function decodes the JMP Instruction
+ * and its operands.
+ * Input:
+ * Output:
+ */
+void decodeJMPInstructionOperand(){
+	int jmpCount = 0;
+
+	int operand1L1Count = 0, operand1L2Count = 0, operand1L3Count = 0;
+
+	char tmpJMP_Opcode[8], tmpL1_Opcode[8], tmpL2_Opcode[8], tmpL3_Opcode[8];
+
+	for (int i = 0; i< 8; i++) {
+		tmpJMP_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+		tmpL1_Opcode[i] = L1_Opcode[i] ? '1' : '0';
+		tmpL2_Opcode[i] = L2_Opcode[i] ? '1' : '0';
+		tmpL3_Opcode[i] = L3_Opcode[i] ? '1' : '0';
+	}
+
+	for (int i = 0; i < 8; i++){
+		if (operation[i]==tmpJMP_Opcode[i])
+			jmpCount++;
+
+		if (operand1[i]==tmpL1_Opcode[i])
+			operand1L1Count++;
+		if (operand1[i]==tmpL2_Opcode[i])
+			operand1L2Count++;
+		if (operand1[i]==tmpL3_Opcode[i])
+			operand1L3Count++;
+	}
+
+	if (jmpCount==8)
+		instructionOperation=137;
+
+	if (operand1L1Count==8)
+		instructionOperand1=L1;
+	else if (operand1L2Count==8)
+		instructionOperand1=L2;
+	else if (operand1L3Count==8)
+		instructionOperand1=L3;
+
+	return;
+
+}
+/*******************************************
+ * This function decodes the DMP Instruction
+ * and its operands.
+ * Input:
+ * Output:
+ */
+void decodeDMPInstructionOperand(){
+
+}
+
+/*******************************************
  This function decodes operations and  calls
  the appropriate function.
  *******************************************/
@@ -1537,8 +1622,9 @@ void callAppropriateFunction(){
 	/*
 	else if (instructionOperation==136)
 		mvi(instructionOperand1,);
+	*/
 	else if (instructionOperation==137)
-		JMP(instructionOperand1);
+		JMP (instructionOperand1);
 	else if (instructionOperation==138)
 		JGT(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==139)
@@ -1546,7 +1632,8 @@ void callAppropriateFunction(){
 	else if (instructionOperation==140)
 		JNE(instructionOperand1, instructionOperand2, instructionOperand3);
 	else if (instructionOperation==141)
-		JEQ(instrucitonOperand1, instructionOperand2, instructionOperand3);
+		JEQ(instructionOperand1, instructionOperand2, instructionOperand3);
+	/*
 	else if (instructionOperation==142)
 		dmp();
 	 */
@@ -1556,11 +1643,14 @@ void callAppropriateFunction(){
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
- 
-// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
-// If content of register x is equal to content of register y then stores the array L content into program counter register 
-void JEQ(int x, int y, int L){ //Jump if equal 
-	
+//Jump to label address L
+void JMP (int L){
+	startMemLocation = L;
+}
+// Jump if equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer.
+// If content of register x is equal to content of register y then stores the array L content into program counter register
+void JEQ(int x, int y, int L){ //Jump if equal
+
 	sub(0,x,y);
 	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if(n == 0){
@@ -1568,19 +1658,19 @@ void JEQ(int x, int y, int L){ //Jump if equal
 	}
 }
 
-// Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
-// If content of register x is less than the content of register y then stores the array L content into program counter register 	
+// Jump if less than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer.
+// If content of register x is less than the content of register y then stores the array L content into program counter register
 void JLT(int x, int y, int L){ //Jump if less than
-	
+
 	sub(0,y,x);
 	unsigned int n = convertBinaryToDecimal_N(R0,32);
 	if((n > 0) && (overflowFlag==0)){
 		startMemLocation = L;
-	}	
+	}
 }
 
-// Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
-// If content of register x is greater than the content of register y then stores the array L content into program counter register 
+// Jump if greater than function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer.
+// If content of register x is greater than the content of register y then stores the array L content into program counter register
 void JGT(int x, int y, int L){ //Jump if greater than
 
 	sub(0,x,y);
@@ -1590,13 +1680,13 @@ void JGT(int x, int y, int L){ //Jump if greater than
 	}
 }
 
-// Jump if not equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer. 
+// Jump if not equal function - Takes three parameters as input i.e., two register numbers (x,y) and boolean array pointer.
 // If content of register x is greater than the content of register y then stores the array L content into program counter register
 void JNE(int x, int y, int L){ //Jump if not equal
 
 	sub(0,x,y);
 	unsigned int n = convertBinaryToDecimal_N(R0,32);
-	if(n != 0) { 
+	if(n != 0) {
 		startMemLocation = L;
 	}
 }
