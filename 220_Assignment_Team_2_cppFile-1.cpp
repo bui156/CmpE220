@@ -235,8 +235,9 @@ int main(){
 
 	memoryDump();
 
-	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3;
+	cout<<"L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3 << endl;
 
+	cout << "FINISHED" << endl;
 }
 
 
@@ -820,6 +821,11 @@ void instructionIntoMemory(char* token,int memLocation) {
                                                                                                                             memory[memLocation][i] = R15_Opcode[i];
                                                                                                                         }
                                                                                                                     }else
+                                                                                                                    if(strcmp(token,"EXIT")==0){
+                                                                                                                    	cout<<"EXIT"<<endl;
+                                                                                                                    	for (int i = 0; i < 8; i++)
+                                                                                                                    		memory[memLocation][i] = exit_Opcode[i];
+                                                                                                                    }else
                                                                                                                         if(MVI_flag){
                                                                                                                             cout<<token<<endl;
                                                                                                                             string num = convertDecimalToBinary(atoi(token));
@@ -1230,6 +1236,9 @@ void decodeALUInstructionOperands(){
 		tmpR13_Opcode[i] = R13_Opcode[i] ? '1' : '0';
 		tmpR14_Opcode[i] = R14_Opcode[i] ? '1' : '0';
 		tmpR15_Opcode[i] = R15_Opcode[i] ? '1' : '0';
+		tmpL1_Opcode[i] = L1_Opcode[i] ? '1' : '0';
+		tmpL2_Opcode[i] = L2_Opcode[i] ? '1' : '0';
+		tmpL3_Opcode[i] = L3_Opcode[i] ? '1' : '0';
 	}
 
 	for (int i = 0; i < 8; i++){
