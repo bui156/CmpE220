@@ -194,6 +194,7 @@ void JEQ(int x, int y, int L); //Jump if equal
 void JLT(int x, int y, int L); //Jump if less than
 void JGT(int x, int y, int L); //Jump if greater than
 void JNE(int x, int y, int L); //Jump if not equal
+void mvi(int RX, char* operand2);
 
 void JMP(int L); //Jump to Label
 
@@ -1546,6 +1547,111 @@ void decodeALUInstructionOperands(){
  * Output:
  */
 void decodeMVIInstructionOperand(){
+	int mviCount = 0;
+
+	int operand1R0Count = 0, operand1R1Count = 0, operand1R2Count = 0, operand1R3Count = 0,
+		operand1R4Count = 0, operand1R5Count = 0, operand1R6Count = 0, operand1R7Count = 0,
+		operand1R8Count = 0, operand1R9Count = 0, operand1R10Count = 0, operand1R11Count = 0,
+		operand1R12Count = 0, operand1R13Count = 0, operand1R14Count = 0,operand1R15Count = 0;
+
+	char tmpMVI_Opcode[8],
+		 tmpR0_Opcode[8], tmpR1_Opcode[8], tmpR2_Opcode[8], tmpR3_Opcode[8],
+		 tmpR4_Opcode[8], tmpR5_Opcode[8], tmpR6_Opcode[8], tmpR7_Opcode[8],
+		 tmpR8_Opcode[8], tmpR9_Opcode[8], tmpR10_Opcode[8], tmpR11_Opcode[8],
+		 tmpR12_Opcode[8], tmpR13_Opcode[8], tmpR14_Opcode[8], tmpR15_Opcode[8];
+
+	for (int i = 0; i< 8; i++) {
+		tmpMVI_Opcode[i] = MVI_Opcode[i] ? '1' : '0';
+		tmpR1_Opcode[i] = R1_Opcode[i] ? '1' : '0';
+		tmpR2_Opcode[i] = R2_Opcode[i] ? '1' : '0';
+		tmpR3_Opcode[i] = R3_Opcode[i] ? '1' : '0';
+		tmpR4_Opcode[i] = R4_Opcode[i] ? '1' : '0';
+		tmpR5_Opcode[i] = R5_Opcode[i] ? '1' : '0';
+		tmpR6_Opcode[i] = R6_Opcode[i] ? '1' : '0';
+		tmpR7_Opcode[i] = R7_Opcode[i] ? '1' : '0';
+		tmpR8_Opcode[i] = R8_Opcode[i] ? '1' : '0';
+		tmpR9_Opcode[i] = R9_Opcode[i] ? '1' : '0';
+		tmpR10_Opcode[i] = R10_Opcode[i] ? '1' : '0';
+		tmpR11_Opcode[i] = R11_Opcode[i] ? '1' : '0';
+		tmpR12_Opcode[i] = R12_Opcode[i] ? '1' : '0';
+		tmpR13_Opcode[i] = R13_Opcode[i] ? '1' : '0';
+		tmpR14_Opcode[i] = R14_Opcode[i] ? '1' : '0';
+		tmpR15_Opcode[i] = R15_Opcode[i] ? '1' : '0';
+	}
+
+	for (int i = 0; i < 8; i++){
+		if (operation[i]==tmpMVI_Opcode[i])
+			mviCount++;
+
+		if (operand1[i]==tmpR0_Opcode[i])
+			operand1R0Count++;
+		if (operand1[i]==tmpR1_Opcode[i])
+			operand1R1Count++;
+		if (operand1[i]==tmpR2_Opcode[i])
+			operand1R2Count++;
+		if (operand1[i]==tmpR3_Opcode[i])
+			operand1R3Count++;
+		if (operand1[i]==tmpR4_Opcode[i])
+			operand1R4Count++;
+		if (operand1[i]==tmpR5_Opcode[i])
+			operand1R5Count++;
+		if (operand1[i]==tmpR6_Opcode[i])
+			operand1R6Count++;
+		if (operand1[i]==tmpR7_Opcode[i])
+			operand1R7Count++;
+		if (operand1[i]==tmpR8_Opcode[i])
+			operand1R8Count++;
+		if (operand1[i]==tmpR9_Opcode[i])
+			operand1R9Count++;
+		if (operand1[i]==tmpR10_Opcode[i])
+			operand1R10Count++;
+		if (operand1[i]==tmpR11_Opcode[i])
+			operand1R11Count++;
+		if (operand1[i]==tmpR12_Opcode[i])
+			operand1R12Count++;
+		if (operand1[i]==tmpR13_Opcode[i])
+			operand1R13Count++;
+		if (operand1[i]==tmpR14_Opcode[i])
+			operand1R14Count++;
+		if (operand1[i]==tmpR15_Opcode[i])
+			operand1R15Count++;
+	}
+
+	if (mviCount==8)
+		instructionOperation=136;
+
+	if (operand1R0Count==8)
+		instructionOperand1=0;
+	else if (operand1R1Count==8)
+		instructionOperand1=1;
+	else if (operand1R2Count==8)
+		instructionOperand1=2;
+	else if (operand1R3Count==8)
+		instructionOperand1=3;
+	else if (operand1R4Count==8)
+		instructionOperand1=4;
+	else if (operand1R5Count==8)
+		instructionOperand1=5;
+	else if (operand1R6Count==8)
+		instructionOperand1=6;
+	else if (operand1R7Count==8)
+		instructionOperand1=7;
+	else if (operand1R8Count==8)
+		instructionOperand1=8;
+	else if (operand1R9Count==8)
+		instructionOperand1=9;
+	else if (operand1R10Count==8)
+		instructionOperand1=10;
+	else if (operand1R11Count==8)
+		instructionOperand1=11;
+	else if (operand1R12Count==8)
+		instructionOperand1=12;
+	else if (operand1R13Count==8)
+		instructionOperand1=13;
+	else if (operand1R14Count==8)
+		instructionOperand1=14;
+	else if (operand1R15Count==8)
+		instructionOperand1=15;
 
 }
 /*******************************************
@@ -1628,10 +1734,8 @@ void callAppropriateFunction(){
 	*/
 	else if (instructionOperation==135)
 		mov(instructionOperand1, instructionOperand2, instructionOperand3);
-	/*
 	else if (instructionOperation==136)
-		mvi(instructionOperand1,);
-	*/
+		mvi(instructionOperand1, operand2);
 	else if (instructionOperation==137)
 		JMP (instructionOperand1);
 	else if (instructionOperation==138)
@@ -1652,6 +1756,9 @@ void callAppropriateFunction(){
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
+void mvi (int RX, char* operand2){
+
+}
 //Jump to label address L
 void JMP (int L){
 	startMemLocation = L;
