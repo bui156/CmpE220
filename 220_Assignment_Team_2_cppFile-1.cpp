@@ -36,7 +36,7 @@ int startMemLocation = 1024;
 int L1 = 0;
 int L2 = 0;
 int L3 = 0;
-int jal = 0;
+int jalReturnAddress = 0;
 //operationType will be the "opcode" of the operation to be taken.
 int operationType = 0;
 
@@ -223,7 +223,7 @@ int main(){
 	readFromFile(fileName);
 
 	memoryDump();
-	cout<< endl << "L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3 <<", JAL:: "<<jal << endl;
+	cout<< endl << "L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3 <<", JAL:: "<<jalReturnAddress << endl;
 	//Start Program
 	cout << "Starting Program" << endl;
 	startMemLocation=1024;
@@ -577,7 +577,7 @@ void memoryDump() {
 			printf("\n");
 	}
 
-	cout<<endl << "L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3 <<", JAL:: "<<jal << endl;
+	cout<<endl << "L1:: "<<L1<<", L2:: "<<L2<<", L3:: "<<L3 <<", JAL:: "<<jalReturnAddress << endl;
 
 	return;
 
@@ -772,7 +772,7 @@ void instructionIntoMemory(char* token,int memLocation) {
                                                             startMemLocation+=2;
                                                             JMP_flag = false;
                                                             if(JAL_flag){
-                                                                jal = startMemLocation+1;
+                                                                jalReturnAddress = startMemLocation+1;
                                                                 JAL_flag = false;
                                                             }
                                                         }
@@ -786,7 +786,7 @@ void instructionIntoMemory(char* token,int memLocation) {
                                                                 startMemLocation+=2;
                                                                 JMP_flag = false;
                                                                 if(JAL_flag){
-                                                                    jal = startMemLocation+1;
+                                                                    jalReturnAddress = startMemLocation+1;
                                                                     JAL_flag = false;
                                                                 }
                                                             }
@@ -800,7 +800,7 @@ void instructionIntoMemory(char* token,int memLocation) {
                                                                     startMemLocation+=2;
                                                                     JMP_flag = false;
                                                                     if(JAL_flag){
-                                                                        jal = startMemLocation+1;
+                                                                        jalReturnAddress = startMemLocation+1;
                                                                         JAL_flag = false;
                                                                     }
                                                                 }
@@ -1929,8 +1929,10 @@ void JAL(int L){
 
     bool tempR1[32];
     //int tempStackPointer = startMemLocation+4;
-    int tempStackPointer = jal;
-    convertDecimalToBinary_N(tempStackPointer,tempR1);
+    //int tempStackPointer = jal;
+    //convertDecimalToBinary_N(tempStackPointer,tempR1);
+
+    convertDecimalToBinary_N(jalReturnAddress,tempR1);
 
     for(int i=0; i<32; i++){
         cout<<tempR1[i];
