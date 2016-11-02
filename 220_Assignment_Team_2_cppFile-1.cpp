@@ -1079,7 +1079,7 @@ void parseInstructionFromMemory(){
 
 		operationType = 2; //Set to MVI Type Instruction
 
-		for (int i = 8; i < 23; i++) {
+		for (int i = 8; i < 24; i++) {
 			if (i >= 8 && i <=15)
 				operand1[i-8] = currentInstruction[i]; //Operand1 will have destination Register
 			if (i >= 16 && i <= 23)
@@ -1756,8 +1756,19 @@ void callAppropriateFunction(){
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
-void mvi (int RX, char* operand2){
+void mvi(int x, char* temp){
+	bool tempR1[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, tempR2[32], tempA[32];
 
+	for(int i=0; i<8; i++){
+		if(temp[i]=='0')
+			tempR1[i+24] = 0;
+		else
+			tempR1[i+24] = 1;
+	}
+
+
+//	function to decide which register is defined by x
+	findDestinationRegister(x, tempR1);
 }
 //Jump to label address L
 void JMP (int L){
