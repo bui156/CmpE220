@@ -40,6 +40,10 @@ int jal = 0;
 //operationType will be the "opcode" of the operation to be taken.
 int operationType = 0;
 
+//Stack Pointer = 1536 because Stack starts from there.
+int basePointer = 1536;
+int stackPointer = 1536;
+
 //Opcodes for Registers
 char tmpExit_Opcode [8] = {'1','0','1','0','1','0','1','0'};
 bool exit_Opcode [8] = {1,0,1,0,1,0,1,0}; //AAh, 170d
@@ -227,6 +231,14 @@ int main(){
 		operationType = 0;
 		getCurrentInstruction();
 		parseInstructionFromMemory();
+
+		for (int i = 0; i < 8; i++) {
+			//printf("%c", operation[i]);
+			cout << operation[i];
+		}
+
+		cout << "Hello" << endl;
+
 		if (exitCodeCount != 8){
 			if (operationType == 1) { //ALU Type Instruction: Operation, Operand1, Operand2, Operand3
 				decodeALUInstructionOperands();
@@ -1912,12 +1924,53 @@ void callAppropriateFunction(){
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
-void RET(){
-
-}
+// Jump-and-Link function. This function will push the return address onto the stack and go to the  instruction specified by the label L
 void JAL(int L){
 
+    bool tempR1[32];
+    //int tempStackPointer = startMemLocation+4;
+    int tempStackPointer = jal;
+    convertDecimalToBinary_N(tempStackPointer,tempR1);
+
+    for(int i=0; i<32; i++){
+        cout<<tempR1[i];
+    }
+    cout<<endl;
+
+    for(int i=0; i<32; i++){
+        if(i>=0 && i<=7)
+            memory[stackPointer][i] = tempR1[i];
+        if(i>=8 && i<=15)
+            memory[stackPointer+1][i-8] = tempR1[i];
+        if(i>=16 && i<=23)
+            memory[stackPointer+2][i-16] = tempR1[i];
+        if(i>=24 && i<=31)
+            memory[stackPointer+3][i-24] = tempR1[i];
+    }
+    stackPointer = stackPointer+4;
+    startMemLocation = L;
 }
+
+// Return Function Pops the top of the stack and takes control to the address stored on the top of the stack
+void RET(){
+
+    bool tempR1[32];
+    for(int i=0; i<32; i++) {
+        if(i>=0 && i<=7)
+            tempR1[i] = memory[stackPointer-4][i];
+        if(i>=8 && i<=15)
+            tempR1[i] = memory[stackPointer-3][i-8];
+        if(i>=16 && i<=23)
+            tempR1[i] = memory[stackPointer-2][i-16];
+        if(i>=24 && i<=31)
+            tempR1[i] = memory[stackPointer-1][i-24];
+    }
+
+    int returnAddress = convertBinaryToDecimal_N(tempR1,32);
+    stackPointer -= 4;
+    startMemLocation = returnAddress;
+}
+
 void mvi(int x, char* temp){
 	bool tempR1[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, tempR2[32], tempA[32];
 
