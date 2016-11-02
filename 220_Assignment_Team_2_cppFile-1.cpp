@@ -36,6 +36,7 @@ int startMemLocation = 1024;
 int L1 = 0;
 int L2 = 0;
 int L3 = 0;
+int JAL = 0;
 //operationType will be the "opcode" of the operation to be taken.
 int operationType = 0;
 
@@ -78,6 +79,8 @@ bool JLT_Opcode [8] = {1,0,0,0,1,0,1,1}; //139
 bool JNE_Opcode [8] = {1,0,0,0,1,1,0,0}; //140
 bool JEQ_Opcode [8] = {1,0,0,0,1,1,0,1}; //141
 bool DMP_Opcode [8] = {1,0,0,0,1,1,1,0}; //142
+bool RET_Opcode [8] = {1,0,0,0,1,1,1,1}; //143
+bool JAL_Opcode [8] = {1,0,0,1,0,0,0,0}; //144
 
 bool A[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1};
 bool R0 [32];
@@ -166,6 +169,8 @@ void decodeALUInstructionOperands();
 void decodeMVIInstructionOperand();
 void decodeJMPInstructionOperand();
 void decodeDMPInstructionOperand();
+void decodeRETInstructionOperand();
+void decodeJALInstructionOperand();
 void callAppropriateFunction();
 //void add(int z, int x, int y);
 //void sub(int z, int x, int y);
@@ -195,6 +200,8 @@ void JLT(int x, int y, int L); //Jump if less than
 void JGT(int x, int y, int L); //Jump if greater than
 void JNE(int x, int y, int L); //Jump if not equal
 void mvi(int RX, char* operand2);
+void RET();
+void JAL(int L);
 
 void JMP(int L); //Jump to Label
 
@@ -233,6 +240,13 @@ int main(){
 			else if (operationType == 4) { //DMP Instruction
 				decodeDMPInstructionOperand();
 				startMemLocation += 4;
+			}
+			else if (operationType == 5) { //RET Instruction
+				decodeRETInstructionOperand();
+				startMemLocation +=4;
+			}
+			else if (operationType == 6) { //JAL Instruction
+				decodeJALInstructionOperand();
 			}
 			callAppropriateFunction();
 		}
@@ -994,12 +1008,14 @@ void parseInstructionFromMemory(){
 	int addCount = 0, subCount = 0, mulCount = 0, divCount = 0,
 		modCount = 0, ldaCount = 0, staCount = 0, movCount = 0,
 		mviCount = 0, jmpCount = 0, jgtCount = 0, jltCount = 0,
-		jneCount = 0, jeqCount = 0, dmpCount = 0;
+		jneCount = 0, jeqCount = 0, dmpCount = 0, retCount = 0,
+		jalCount = 0;
 
 	char tmpADD_Opcode[8], tmpSUB_Opcode[8], tmpMUL_Opcode[8], tmpDIV_Opcode[8],
 		 tmpMOD_Opcode[8], tmpLDA_Opcode[8], tmpSTA_Opcode[8], tmpMOV_Opcode[8],
 		 tmpMVI_Opcode[8], tmpJMP_Opcode[8], tmpJGT_Opcode[8], tmpJLT_Opcode[8],
-		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8];
+		 tmpJNE_Opcode[8], tmpJEQ_Opcode[8], tmpDMP_Opcode[8], tmpRET_Opcode[8],
+		 tmpJAL_Opcode[8];
 
 	//Convert Opcodes stored as Boolean array into Array of Chars.
 	for (int i = 0; i < 8; i++){
@@ -1018,6 +1034,8 @@ void parseInstructionFromMemory(){
 		tmpJNE_Opcode[i] = JNE_Opcode[i] ? '1' : '0';
 		tmpJEQ_Opcode[i] = JEQ_Opcode[i] ? '1' : '0';
 		tmpDMP_Opcode[i] = DMP_Opcode[i] ? '1' : '0';
+		tmpRET_Opcode[i] = RET_Opcode[i] ? '1' : '0';
+		tmpJAL_Opcode[i] = JAL_Opcode[i] ? '1' : '0';
 	}
 
 	//read in opcode
@@ -1056,6 +1074,10 @@ void parseInstructionFromMemory(){
 			jeqCount++;
 		if (operation[i]==tmpDMP_Opcode[i])
 			dmpCount++;
+		if (operation[i]==tmpRET_Opcode[i])
+			retCount++;
+		if (operation[i]==tmpJAL_Opcode[i])
+			jalCount++;
 	}
 
 	//if ALU instruction, Format = Operation, Operand1, Operand2, Operand3
@@ -1100,6 +1122,21 @@ void parseInstructionFromMemory(){
 
 		operationType = 4; //Set to DMP Instruction
 
+	}
+	//RET Instruction
+	else if (retCount==8){
+
+		operationType = 5; //Set to RET Instruction
+
+	}
+	//JAL Instruction
+	else if (jalCount==8){
+
+		operationType = 6; //Set to JAL Instruction
+
+		for (int i = 8; i < 16; i++) {
+			operand1[i-8] = currentInstruction[i];
+		}
 	}
 
 	exitCodeCount = 0; //Reset Exit Code Count in case it was incremented by other codes matching "part" of the exit code.
@@ -1708,6 +1745,75 @@ void decodeJMPInstructionOperand(){
 void decodeDMPInstructionOperand(){
 
 }
+/*******************************************
+ * This function decodes the RET Instruction
+ * and its operands.
+ * Input:
+ * Output:
+ */
+void decodeRETInstructionOperand(){
+	int retCount = 0;
+
+	char tmpRET_Opcode[8];
+
+	for (int i = 0; i< 8; i++)
+		tmpRET_Opcode[i] = JMP_Opcode[i] ? '1' : '0';
+
+	for (int i = 0; i < 8; i++){
+		if (operation[i]==tmpRET_Opcode[i])
+			retCount++;
+	}
+
+	if (retCount==8)
+		instructionOperation=143;
+
+	return;
+
+}
+/*******************************************
+ * This function decodes the JAL Instruction
+ * and its operands.
+ * Input:
+ * Output:
+ */
+void decodeJALInstructionOperand(){
+	int jalCount = 0;
+
+	int operand1L1Count = 0, operand1L2Count = 0, operand1L3Count = 0;
+
+	char tmpJAL_Opcode[8], tmpL1_Opcode[8], tmpL2_Opcode[8], tmpL3_Opcode[8];
+
+	for (int i = 0; i< 8; i++) {
+		tmpJAL_Opcode[i] = JAL_Opcode[i] ? '1' : '0';
+		tmpL1_Opcode[i] = L1_Opcode[i] ? '1' : '0';
+		tmpL2_Opcode[i] = L2_Opcode[i] ? '1' : '0';
+		tmpL3_Opcode[i] = L3_Opcode[i] ? '1' : '0';
+	}
+
+	for (int i = 0; i < 8; i++){
+		if (operation[i]==tmpJAL_Opcode[i])
+			jalCount++;
+
+		if (operand1[i]==tmpL1_Opcode[i])
+			operand1L1Count++;
+		if (operand1[i]==tmpL2_Opcode[i])
+			operand1L2Count++;
+		if (operand1[i]==tmpL3_Opcode[i])
+			operand1L3Count++;
+	}
+
+	if (jalCount==8)
+		instructionOperation=144;
+
+	if (operand1L1Count==8)
+		instructionOperand1=L1;
+	else if (operand1L2Count==8)
+		instructionOperand1=L2;
+	else if (operand1L3Count==8)
+		instructionOperand1=L3;
+
+	return;
+}
 
 /*******************************************
  This function decodes operations and  calls
@@ -1750,12 +1856,22 @@ void callAppropriateFunction(){
 	else if (instructionOperation==142)
 		dmp();
 	 */
+	else if (instructionOperation==143)
+		RET();
+	else if (instructionOperation==144)
+		JAL(instructionOperand1);
 	return;
 }
 
 /******************************************************************
  Functions for ALU Operation i.e. ADD, SUB, MUL, DIV, MOD, etc...
  ******************************************************************/
+void RET(){
+
+}
+void JAL(int L){
+
+}
 void mvi(int x, char* temp){
 	bool tempR1[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, tempR2[32], tempA[32];
 
